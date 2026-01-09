@@ -593,3 +593,26 @@ body.is-satellite .map-filters-toggle {
 .map-card.is-popup .bottom-controls {
     display: none;
 }
+/* custom marker pins */
+.pin-marker {
+  cursor: pointer;
+}
+
+.pin {
+  width: 34px;
+  height: 34px;
+  background: var(--pin-color);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  position: relative;
+}
+
+.pin img {
+  width: 18px;
+  height: 18px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  pointer-events: none;
+}

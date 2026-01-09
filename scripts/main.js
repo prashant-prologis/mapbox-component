@@ -139,14 +139,32 @@ map.on("load", () => {
     transport: "#DBD94B",
     amenities: "#4BA3DB",
   };
-
+const icons = {
+  food: "./assets/icons/food.svg",
+  transport: "./assets/icons/transport.svg",
+  amenities: "./assets/icons/amenities.svg"
+};
   // Create markers for selected POI/s
   const markersByLayer = {};
   for (const layer in points) {
+    // markersByLayer[layer] = points[layer].map((item) => {
+    //         const marker = new mapboxgl.Marker({ color: colors[layer] }).setLngLat(
+    //     item.lngLat
+    //   );
     markersByLayer[layer] = points[layer].map((item) => {
-      const marker = new mapboxgl.Marker({ color: colors[layer] }).setLngLat(
-        item.lngLat
-      );
+    const el = document.createElement("div");
+    el.className = "pin-marker";
+    el.style.setProperty("--pin-color", colors[layer]);
+
+       el.innerHTML = `
+      <div class="pin">
+        <img src="${icons[layer]}" alt="${layer}" />
+      </div>
+    `;
+
+    const marker = new mapboxgl.Marker(el).setLngLat(item.lngLat);
+
+        
       // Use flex column for popup content
       const popupContent = `
         <div class="popup-content-flex">

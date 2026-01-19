@@ -11,6 +11,7 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.17.0/mapbox-gl.js"></script>
     <link rel="stylesheet" href="./styles/main.css" />
     <script src="./scripts/main.js" defer></script>
+    <script src="./scripts/map-overlay.js" defer></script>
 </head>
 
 <body>
@@ -54,10 +55,6 @@
                         <span>Amenities</span>
                     </button>
                 </div>
-                    <!-- Overlay -->
-    <div class="map-overlay" id="mapOverlay">
-        <button class="map-overlay-close" aria-label="Close map">×</button>
-    </div>
             </div>
             <div>
                 <button class="pill js-open-map" type="button" data-type="Open Map" role="tab" aria-selected="false">
@@ -130,6 +127,28 @@
             -- right side content
         </div>
     </div>
+    <!-- popup-modal -->
+    <div class="modal" id="mapModal" aria-hidden="true">
+        <div class="modal_overlay js-close-map"></div>
+          <button
+    class="modal-close-btn js-close-map"
+    type="button"
+    aria-label="Close map"
+  >
+    ✕
+  </button>
+        <div class="modal_content" role="dialog" aria-modal="true">
+            <!-- <button class="modal__close js-close-map" type="button">✕</button> -->
+            <div class="modal_header">
+            </div>
+
+            <div class="modal_body">
+                <div id="mapModalCanvas" class="mapbox-container"></div>
+                <div class="top-controls-holder"></div>
+            </div>
+        </div>
+    </div>
+    <!-- ends -->
 </body>
 
 </html>

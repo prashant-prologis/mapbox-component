@@ -7,12 +7,13 @@ mapboxgl.accessToken =
 const propertyLngLat = [
   -76.525583, 39.25904];
 
+const BASE_STYLE_URL = "mapbox://styles/phollis-prologis/cmixr0gqa000d01rj1py34kjg";
+
 const map = new mapboxgl.Map({
   container: "map",
-  style: "mapbox://styles/phollis-prologis/cmixr0gqa000d01rj1py34kjg",
+  style: BASE_STYLE_URL,
   attributionControl: false,
-  // center: [-76.6122, 39.2904], // Baltimore
-  center: [-76.525583, 39.25904],
+  center: propertyLngLat,
   zoom: 12,
 });
 
@@ -54,19 +55,17 @@ window.addEventListener("resize", handleMobileFilters);
 window.addEventListener("DOMContentLoaded", handleMobileFilters);
 // 
 const placesToken = "AAPTxy8BH1VEsoebNVZXo8HurLmr_fzoB_OJeMHTT117x7yTw6PTdp6kXVqjeR36gVvs31jWOHGqDqy2itT7XXo-Ba2PD9gPJ5hHjfWEMI3cWeGYEVX65AU5PTA1vvNcB1OlwIpmCy9rlHQzXdy8cvBbIy8bQ674ZYxWTY1uPclh1jpg84krvHrUH8yqu0OIxydKtn7uhxS1Ydj2kv97eWoGXtP2xuTUwVaLdk3H7k9HjtY.AT1_82PMU3Il"
-const placesRadiusMeters = Number(1609.344);
+const placesRadiusMeters = Number(1609.344); // NEED TO MAKE THIS DYNAMIC [default 8kms]
 const placesPageSize = Number(20);
 map.on("load", async () => {
   // Route line
-  // Route line (create once)
   map.addSource("route", {
     type: "geojson",
     data: {
       type: "FeatureCollection",
-      features: [] // empty initially
+      features: []
     }
   });
-
   map.addLayer({
     id: "route",
     type: "line",
@@ -77,9 +76,30 @@ map.on("load", async () => {
     },
     paint: {
       "line-color": "#22C3B3",
-      "line-width": 8,
+      "line-width": 6,
     },
   });
+  
+  // for start & end point dots on map
+map.addSource("route-points", {
+  type: "geojson",
+  data: {
+    type: "FeatureCollection",
+    features: []
+  }
+});
+// dots layer added
+map.addLayer({
+  id: "route-points",
+  type: "circle",
+  source: "route-points",
+  paint: {
+    "circle-radius": 9,
+    "circle-color": "#22C3B3",
+    "circle-stroke-width": 1,
+    "circle-stroke-color": "#ffffff"
+  }
+});
 
   // Custom city marker at map center
   // Accept city image from a variable
@@ -95,7 +115,7 @@ map.on("load", async () => {
     </div>
   `;
   new mapboxgl.Marker({ element: cityMarkerEl, anchor: "bottom" })
-    .setLngLat([-76.525583, 39.25904])
+    .setLngLat(propertyLngLat)
     .addTo(map);
 
   // Markers
@@ -136,7 +156,7 @@ map.on("load", async () => {
     return out;
   }
 
-  // Fetch ArcGIS categories you want per pill
+  // Fetch ArcGIS categories per pill
   const [foodRestaurant, foodGrocery, transportBus, transportTrain, amenitiesPark] =
     await Promise.all([
       fetchArcgisPlacesNearPoint({
@@ -263,9 +283,6 @@ const icons = {
   enabled.clear();
 }
 
-// Make it callable from outside (open map click)
-window.resetPillsAndPins = resetPillsAndPins;
-
 
   function toggleLayer(layer) {
     const list = markersByLayer[layer] || [];
@@ -320,6 +337,7 @@ function updateRoute(geojson) {
   if (geojson.type === "FeatureCollection") {
     // data = geojson.features?.[0];
     data = geojson.features?.[1];
+    updateStartEndPoints(data);
   } else if (
     geojson.type === "LineString" ||
     geojson.type === "MultiLineString"
@@ -336,43 +354,31 @@ function updateRoute(geojson) {
   if (!src) return; // map not loaded yet
   src.setData(data); // updates route dynamically
 }
-// modal-map
-const mapCard = document.getElementById('mapCard');
-const overlay = document.getElementById('mapOverlay');
-const openBtns = document.querySelectorAll('.js-open-map');
-const closeBtn = overlay.querySelector('.map-overlay-close');
+// start end dots
+function updateStartEndPoints(routeFeature) {
+  const coords = routeFeature?.geometry?.coordinates;
+  if (!Array.isArray(coords) || coords.length < 2) return;
 
-function openMapOverlay() {
-  if (window.resetPillsAndPins) window.resetPillsAndPins();
+  const start = coords[0];                    // [lng, lat]
+  const end = coords[coords.length - 1];      // [lng, lat]
 
-  mapCard.classList.add('is-popup');
-  overlay.classList.add('active');
-
-  // resize map if needed
-  setTimeout(() => {
-    if (window.map && map.resize) map.resize();
-  }, 100);
+  map.getSource("route-points").setData({
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: { pt: "start" },
+        geometry: { type: "Point", coordinates: start }
+      },
+      {
+        type: "Feature",
+        properties: { pt: "end" },
+        geometry: { type: "Point", coordinates: end }
+      }
+    ]
+  });
 }
 
-function closeMapOverlay() {
-  mapCard.classList.remove('is-popup');
-  overlay.classList.remove('active');
-
-  setTimeout(() => {
-    if (window.map && map.resize) map.resize();
-  }, 100);
-}
-
-// open from any button
-openBtns.forEach(btn => btn.addEventListener('click', openMapOverlay));
-
-// close
-closeBtn.addEventListener('click', closeMapOverlay);
-
-// ESC to close popup
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeMapOverlay();
-});
 
 // arcGIS
 // ArcGIS Places fetch (NEW)
@@ -402,4 +408,49 @@ async function fetchArcgisPlacesNearPoint({ lng, lat, searchText, radiusMeters, 
   const data = await resp.json();
   if (!Array.isArray(data.results)) throw new Error("ArcGIS Places response missing results[]");
   return data.results;
+}
+// add top controls to modal-map
+function injectTopControlsIntoModal(modalMap) {
+  const holder = document.querySelector("#mapModal .top-controls-holder");
+  if (!holder || holder.children.length) return;
+
+  holder.innerHTML = `
+    <div class="top-controls">
+      <div class="map-type-btn-gap">
+        <button class="btn active" type="button" data-style="streets">Map</button>
+        <button class="btn" type="button" data-style="satellite">Satellite</button>
+      </div>
+
+      <div class="map-zoom-btn-gap">
+        <button class="btn" type="button" data-zoom="out">−</button>
+        <button class="btn" type="button" data-zoom="in">+</button>
+      </div>
+    </div>
+  `;
+
+  // Style buttons
+  const styleBtns = holder.querySelectorAll("[data-style]");
+  styleBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const style = btn.dataset.style;
+
+      modalMap.setStyle(
+        style === "satellite"
+          ? "./styles-hybrid/style-hybrid.json"
+          : "./styles-map/style-map.json"
+      );
+
+      styleBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  // Zoom buttons
+  holder.querySelector("[data-zoom='in']")?.addEventListener("click", () => modalMap.zoomIn());
+  holder.querySelector("[data-zoom='out']")?.addEventListener("click", () => modalMap.zoomOut());
+}
+
+
+function setModalMapStyle(style, btn) {
+  setMapStyleFor("modal", style, btn);
 }

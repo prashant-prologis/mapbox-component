@@ -24,7 +24,6 @@ function openMapModal() {
 
     modalMap.on("load", async () => {
       initBaseMapUI(modalMap);
-
       // Sync route data from main map (if any)
       const mainRouteSource = map.getSource("route");
       if (mainRouteSource) {
@@ -54,7 +53,45 @@ function openMapModal() {
 
   requestAnimationFrame(() => modalMap?.resize());
 }
+function injectTopControlsIntoModal(modalMap) {
+  const holder = document.querySelector("#mapModal .top-controls-holder");
+  if (!holder || holder.children.length) return;
 
+  holder.innerHTML = `
+    <div class="top-controls">
+      <div class="map-type-btn-gap">
+        <button class="btn active" type="button" data-style="streets">Map</button>
+        <button class="btn" type="button" data-style="satellite">Satellite</button>
+      </div>
+
+      <div class="map-zoom-btn-gap">
+        <button class="btn" type="button" data-zoom="out">−</button>
+        <button class="btn" type="button" data-zoom="in">+</button>
+      </div>
+    </div>
+  `;
+
+  // Style buttons
+  const styleBtns = holder.querySelectorAll("[data-style]");
+  styleBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const style = btn.dataset.style;
+
+      modalMap.setStyle(
+        style === "satellite"
+          ? "./styles-hybrid/style-hybrid.json"
+          : "./styles-map/style-map.json"
+      );
+
+      styleBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  // Zoom buttons
+  holder.querySelector("[data-zoom='in']")?.addEventListener("click", () => modalMap.zoomIn());
+  holder.querySelector("[data-zoom='out']")?.addEventListener("click", () => modalMap.zoomOut());
+}
 function closeMapModal() {
   if (!mapModalEl) return;
   mapModalEl.classList.remove("is-open");

@@ -5,7 +5,7 @@ mapboxgl.accessToken =
   "pk.eyJ1IjoicGhvbGxpcy1wcm9sb2dpcyIsImEiOiJjbWl4cGt1ajUwN2JpM2RvOXdqOWFmb3U3In0.RyiaedumDC0gnw6FeFKqrA ";
 
 const propertyLngLat = [
-  -76.525583, 39.25904];
+  -118.1415221999, 33.978311];
 
 const BASE_STYLE_URL = "mapbox://styles/phollis-prologis/cmixr0gqa000d01rj1py34kjg";
 
@@ -14,45 +14,36 @@ const map = new mapboxgl.Map({
   style: BASE_STYLE_URL,
   attributionControl: false,
   center: propertyLngLat,
-  zoom: 14,
+  zoom: 13,
 });
 const mapsById = new Map(); // "main" -> mapInstance, "modal" -> mapInstance
 
 function registerMap(mapId, mapInstance) {
   mapsById.set(mapId, mapInstance);
 }
-// main map
-// const mainMap = new mapboxgl.Map({...});
 registerMap("main", map);
 
-// modal map
-// const modalMap = new mapboxgl.Map({...});
-
-
-// function setMapStyle(style, el) {
-//   setStyle(style);
-//   const buttons = el.parentElement.querySelectorAll(".btn");
-//   buttons.forEach((btn) => btn.classList.remove("active"));
-//   el.classList.add("active");
-//   document.body.classList.toggle("is-satellite", style === "satellite");
-// }
 function setMapStyle(style, el) {
-  const controls = el.closest(".top-controls");
-  if (!controls) return;
+  const ui = el.closest(".map-ui");
+  if (!ui) return;
 
-  // update only this button group
   const group = el.closest(".map-type-btn-gap");
   group.querySelectorAll(".btn").forEach((btn) => btn.classList.remove("active"));
   el.classList.add("active");
 
-  // scope satellite class locally
-  controls.classList.toggle("is-satellite", style === "satellite");
+  ui.classList.toggle("is-satellite", style === "satellite");
 
-  setStyle(style, controls);
+  if (style === "satellite") {
+    ui.querySelectorAll(".bottom-controls .pill")
+      .forEach((pill) => pill.setAttribute("aria-selected", "false"));
+  }
+
+  setStyle(style, ui);
 }
 
-function setStyle(type, controls) {
-  const mapId = controls.dataset.mapId;
+
+function setStyle(type, ui) {
+  const mapId = ui.dataset.mapId;
   const mapInstance = mapsById.get(mapId);
   if (!mapInstance) return;
 

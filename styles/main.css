@@ -525,35 +525,41 @@ body {
 }
 
 /* Satellite view theme*/
-.top-controls.is-satellite .btn {
+/* Satellite view theme (scoped to a single map ui) */
+.map-ui.is-satellite .btn {
   background: var(--sat-btn-bg);
   color: var(--sat-btn-text);
 }
 
-.top-controls.is-satellite .btn.active {
+.map-ui.is-satellite .btn.active {
   background: var(--sat-btn-active-bg);
   color: var(--sat-btn-text);
 }
 
-.top-controls.is-satellite .bottom-controls .pill {
+/* Bottom pills */
+.map-ui.is-satellite .bottom-controls .pill {
   background: var(--sat-btn-bg);
   color: var(--sat-btn-text);
 }
-.top-controls.is-satellite .bottom-controls .pill .pill-icon{
-    filter: brightness(0) saturate(100%) invert(36%) sepia(99%) saturate(747%)
+
+.map-ui.is-satellite .bottom-controls .pill .pill-icon {
+  filter: brightness(0) saturate(100%) invert(36%) sepia(99%) saturate(747%)
     hue-rotate(153deg) brightness(95%) contrast(101%);
 }
-.top-controls.is-satellite .bottom-controls .pill.is-active {
+
+/* Active pill: use aria-selected since your HTML already uses it */
+.map-ui.is-satellite .bottom-controls .pill[aria-selected="true"] {
   background: var(--sat-btn-active-bg);
   color: var(--sat-accent);
 }
 
-.top-controls.is-satellite .bottom-controls .pill.is-active .pill-icon {
+.map-ui.is-satellite .bottom-controls .pill[aria-selected="true"] .pill-icon {
   filter: var(--sat-accent-filter);
 }
 
+
 /* Optional: match toggle button too */
-.top-controls.is-satellite .map-filters-toggle {
+body.is-satellite .map-filters-toggle {
   background: var(--sat-btn-bg);
   color: var(--sat-btn-text);
 }

@@ -58,7 +58,8 @@ function injectTopControlsIntoModal(modalMap) {
   if (!holder || holder.children.length) return;
 
   holder.innerHTML = `
-    <div class="top-controls" data-map-id="modal">
+  <div class="map-ui" data-map-id="modal">
+    <div class="top-controls">
       <div class="map-type-btn-gap">
         <button class="btn active" type="button" data-style="streets" onclick="setMapStyle('streets', this)">Map</button>
         <button class="btn" type="button" data-style="satellite" onclick="setMapStyle('satellite', this)">Satellite</button>
@@ -68,6 +69,7 @@ function injectTopControlsIntoModal(modalMap) {
         <button class="btn" type="button" data-zoom="out">−</button>
         <button class="btn" type="button" data-zoom="in">+</button>
       </div>
+    </div>
     </div>
   `;
 

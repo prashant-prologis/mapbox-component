@@ -14,7 +14,7 @@ const map = new mapboxgl.Map({
   style: BASE_STYLE_URL,
   attributionControl: false,
   center: propertyLngLat,
-  zoom: 12,
+  zoom: 14,
 });
 
 function setMapStyle(style, el) {
@@ -76,7 +76,7 @@ map.on("load", async () => {
     },
     paint: {
       "line-color": "#22C3B3",
-      "line-width": 6,
+      "line-width": 5,
     },
   });
   
@@ -94,7 +94,7 @@ map.addLayer({
   type: "circle",
   source: "route-points",
   paint: {
-    "circle-radius": 9,
+    "circle-radius": 7,
     "circle-color": "#22C3B3",
     "circle-stroke-width": 1,
     "circle-stroke-color": "#ffffff"
@@ -156,65 +156,62 @@ map.addLayer({
     return out;
   }
 
-  // Fetch ArcGIS categories per pill
-  const [foodRestaurant, foodGrocery, transportBus, transportTrain, amenitiesPark] =
-    await Promise.all([
-      fetchArcgisPlacesNearPoint({
-        lng: propertyLngLat[0],
-        lat: propertyLngLat[1],
-        searchText: "restaurant",
-        radiusMeters: placesRadiusMeters,
-        pageSize: placesPageSize,
-        token: placesToken,
-      }),
-      fetchArcgisPlacesNearPoint({
-        lng: propertyLngLat[0],
-        lat: propertyLngLat[1],
-        searchText: "grocery",
-        radiusMeters: placesRadiusMeters,
-        pageSize: placesPageSize,
-        token: placesToken,
-      }),
-      fetchArcgisPlacesNearPoint({
-        lng: propertyLngLat[0],
-        lat: propertyLngLat[1],
-        searchText: "bus",
-        radiusMeters: placesRadiusMeters,
-        pageSize: placesPageSize,
-        token: placesToken,
-      }),
-      fetchArcgisPlacesNearPoint({
-        lng: propertyLngLat[0],
-        lat: propertyLngLat[1],
-        searchText: "train",
-        radiusMeters: placesRadiusMeters,
-        pageSize: placesPageSize,
-        token: placesToken,
-      }),
-      fetchArcgisPlacesNearPoint({
-        lng: propertyLngLat[0],
-        lat: propertyLngLat[1],
-        searchText: "park",
-        radiusMeters: placesRadiusMeters,
-        pageSize: placesPageSize,
-        token: placesToken,
-      }),
-    ]);
+  // Fetch ArcGIS categories per pill // arcGis api call starts
+  const searchGroups = [
+  {
+    key: "food",
+    terms: ["Restaurant", "Fast Food Restaurant", "Cafe", "Convenience Store", "Supermarket"],
+    pointType: "Food",
+  },
+  {
+    key: "transport",
+    terms: ["Train Station", "Metro", "Subway Station", "Airport", "Port", "Marine Terminal"],
+    pointType: "Transport",
+  },
+  {
+    key: "amenities",
+    terms: ["Gas Station", "Electric Vehicle Charging Station", "Banks", "Parking Lots"],
+    pointType: "Amenity",
+  },
+];
 
-  // Now build points in the exact structure the pills expect
-  const points = {
-    food: dedupePoints([
-      ...arcgisResultsToPoints(foodRestaurant, "Food"),
-      ...arcgisResultsToPoints(foodGrocery, "Food"),
-    ]),
-    transport: dedupePoints([
-      ...arcgisResultsToPoints(transportBus, "Transport"),
-      ...arcgisResultsToPoints(transportTrain, "Transport"),
-    ]),
-    amenities: dedupePoints([
-      ...arcgisResultsToPoints(amenitiesPark, "Amenity"),
-    ]),
-  };
+// common args once
+const [lng, lat] = propertyLngLat;
+
+const baseParams = {
+  lng,
+  lat,
+  radiusMeters: placesRadiusMeters,
+  pageSize: placesPageSize,
+  token: placesToken,
+};
+
+//build all requests (flattened)
+const requests = searchGroups.flatMap((g) =>
+  g.terms.map((searchText) =>
+    fetchArcgisPlacesNearPoint({ ...baseParams, searchText }).then((results) => ({
+      groupKey: g.key,
+      pointType: g.pointType,
+      results,
+    }))
+  )
+);
+
+//run promises concurrently
+const responses = await Promise.all(requests);
+
+//aggregate into points by group
+const points = Object.fromEntries(searchGroups.map((g) => [g.key, []]));
+
+for (const { groupKey, pointType, results } of responses) {
+  points[groupKey].push(...arcgisResultsToPoints(results, pointType));
+}
+
+//dedupe each group (final structure for pills)
+for (const g of searchGroups) {
+  points[g.key] = dedupePoints(points[g.key]);
+}
+// arcGis api call ends
 
 
   // MARKER COLORS:

@@ -100,27 +100,27 @@ map.on("load", async () => {
       "line-width": 5,
     },
   });
-  
+
   // for start & end point dots on map
-map.addSource("route-points", {
-  type: "geojson",
-  data: {
-    type: "FeatureCollection",
-    features: []
-  }
-});
-// dots layer added
-map.addLayer({
-  id: "route-points",
-  type: "circle",
-  source: "route-points",
-  paint: {
-    "circle-radius": 7,
-    "circle-color": "#22C3B3",
-    "circle-stroke-width": 1,
-    "circle-stroke-color": "#ffffff"
-  }
-});
+  map.addSource("route-points", {
+    type: "geojson",
+    data: {
+      type: "FeatureCollection",
+      features: []
+    }
+  });
+  // dots layer added
+  map.addLayer({
+    id: "route-points",
+    type: "circle",
+    source: "route-points",
+    paint: {
+      "circle-radius": 7,
+      "circle-color": "#22C3B3",
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "#ffffff"
+    }
+  });
 
   // Custom city marker at map center
   // Accept city image from a variable
@@ -179,99 +179,91 @@ map.addLayer({
 
   // Fetch ArcGIS categories per pill // arcGis api call starts
   const searchGroups = [
-  {
-    key: "food",
-    terms: ["Restaurant", "Fast Food Restaurant", "Cafe", "Convenience Store", "Supermarket"],
-    pointType: "Food",
-  },
-  {
-    key: "transport",
-    terms: ["Train Station", "Metro", "Subway Station", "Airport", "Port", "Marine Terminal"],
-    pointType: "Transport",
-  },
-  {
-    key: "amenities",
-    terms: ["Gas Station", "Electric Vehicle Charging Station", "Banks", "Parking Lots"],
-    pointType: "Amenity",
-  },
-];
+    {
+      key: "food",
+      terms: ["Restaurant", "Fast Food Restaurant", "Cafe", "Convenience Store", "Supermarket"],
+      pointType: "Food",
+    },
+    {
+      key: "transport",
+      terms: ["Train Station", "Metro", "Subway Station", "Airport", "Port", "Marine Terminal"],
+      pointType: "Transport",
+    },
+    {
+      key: "amenities",
+      terms: ["Gas Station", "Electric Vehicle Charging Station", "Banks", "Parking Lots"],
+      pointType: "Amenity",
+    },
+  ];
 
-// common args once
-const [lng, lat] = propertyLngLat;
+  // common args once
+  const [lng, lat] = propertyLngLat;
 
-const baseParams = {
-  lng,
-  lat,
-  radiusMeters: placesRadiusMeters,
-  pageSize: placesPageSize,
-  token: placesToken,
-};
+  const baseParams = {
+    lng,
+    lat,
+    radiusMeters: placesRadiusMeters,
+    pageSize: placesPageSize,
+    token: placesToken,
+  };
 
-//build all requests (flattened)
-const requests = searchGroups.flatMap((g) =>
-  g.terms.map((searchText) =>
-    fetchArcgisPlacesNearPoint({ ...baseParams, searchText }).then((results) => ({
-      groupKey: g.key,
-      pointType: g.pointType,
-      results,
-    }))
-  )
-);
+  //build all requests (flattened)
+  const requests = searchGroups.flatMap((g) =>
+    g.terms.map((searchText) =>
+      fetchArcgisPlacesNearPoint({ ...baseParams, searchText }).then((results) => ({
+        groupKey: g.key,
+        pointType: g.pointType,
+        results,
+      }))
+    )
+  );
 
-//run promises concurrently
-const responses = await Promise.all(requests);
+  //run promises concurrently
+  const responses = await Promise.all(requests);
 
-//aggregate into points by group
-const points = Object.fromEntries(searchGroups.map((g) => [g.key, []]));
+  //aggregate into points by group
+  const points = Object.fromEntries(searchGroups.map((g) => [g.key, []]));
 
-for (const { groupKey, pointType, results } of responses) {
-  points[groupKey].push(...arcgisResultsToPoints(results, pointType));
-}
+  for (const { groupKey, pointType, results } of responses) {
+    points[groupKey].push(...arcgisResultsToPoints(results, pointType));
+  }
 
-//dedupe each group (final structure for pills)
-for (const g of searchGroups) {
-  points[g.key] = dedupePoints(points[g.key]);
-}
-// arcGis api call ends
+  //dedupe each group (final structure for pills)
+  for (const g of searchGroups) {
+    points[g.key] = dedupePoints(points[g.key]);
+  }
+  // arcGis api call ends
 
 
   // MARKER COLORS:
   const colors = {
-  food: rootStyles.getPropertyValue('--color-food-pin').trim(),
-  transport: rootStyles.getPropertyValue('--color-transport-pin').trim(),
-  amenities: rootStyles.getPropertyValue('--color-amenities-pin').trim(),
-};
-  // const colors = {
-  //   food: "#88FF8D",
-  //   transport: "#DBD94B",
-  //   amenities: "#4BA3DB",
-  // };
-const icons = {
-  food: "./assets/icons/food-dark.svg",
-  transport: "./assets/icons/transport-dark.svg",
-  amenities: "./assets/icons/amenities-dark.svg"
-};
+    food: rootStyles.getPropertyValue('--color-food-pin').trim(),
+    transport: rootStyles.getPropertyValue('--color-transport-pin').trim(),
+    amenities: rootStyles.getPropertyValue('--color-amenities-pin').trim(),
+  };
+
+  const icons = {
+    food: "./assets/icons/food-dark.svg",
+    transport: "./assets/icons/transport-dark.svg",
+    amenities: "./assets/icons/amenities-dark.svg"
+  };
   // Create markers for selected POI/s
   const markersByLayer = {};
   for (const layer in points) {
-    // markersByLayer[layer] = points[layer].map((item) => {
-    //         const marker = new mapboxgl.Marker({ color: colors[layer] }).setLngLat(
-    //     item.lngLat
-    //   );
     markersByLayer[layer] = points[layer].map((item) => {
-    const el = document.createElement("div");
-    el.className = "pin-marker";
-    el.style.setProperty("--pin-color", colors[layer]);
+      const el = document.createElement("div");
+      el.className = "pin-marker";
+      el.style.setProperty("--pin-color", colors[layer]);
 
-       el.innerHTML = `
+      el.innerHTML = `
       <div class="pin">
         <img src="${icons[layer]}" alt="${layer}" />
       </div>
     `;
 
-    const marker = new mapboxgl.Marker(el).setLngLat(item.lngLat);
+      const marker = new mapboxgl.Marker(el).setLngLat(item.lngLat);
 
-        
+
       // Use flex column for popup content
       const popupContent = `
         <div class="popup-content-flex">
@@ -288,18 +280,18 @@ const icons = {
   const enabled = new Set();
   // disable the pins POI inside popup
   function resetPillsAndPins() {
-  // Remove active UI for pills
-  controls.querySelectorAll(".pill").forEach((btn) => {
-    btn.classList.remove("is-active");
-    btn.setAttribute("aria-selected", "false");
-  });
+    // Remove active UI for pills
+    controls.querySelectorAll(".pill").forEach((btn) => {
+      btn.classList.remove("is-active");
+      btn.setAttribute("aria-selected", "false");
+    });
 
-  // Remove all markers from map and clear enabled layers
-  enabled.forEach((layer) => {
-    (markersByLayer[layer] || []).forEach((m) => m.remove());
-  });
-  enabled.clear();
-}
+    // Remove all markers from map and clear enabled layers
+    enabled.forEach((layer) => {
+      (markersByLayer[layer] || []).forEach((m) => m.remove());
+    });
+    enabled.clear();
+  }
 
 
   function toggleLayer(layer) {
@@ -330,7 +322,102 @@ const icons = {
     btn.classList.toggle("is-active", isOn);
     btn.setAttribute("aria-selected", isOn ? "true" : "false");
   });
+  // create nearby route cards
+  function kmToMiles(km) {
+    return km * 0.621371;
+  }
 
+  function formatMilesFromProps(props) {
+    const miles =
+      (typeof props.Total_Miles === "number" && !Number.isNaN(props.Total_Miles))
+        ? props.Total_Miles
+        : (typeof props.Total_Kilometers === "number" && !Number.isNaN(props.Total_Kilometers))
+          ? kmToMiles(props.Total_Kilometers)
+          : null;
+
+    if (miles == null) return "";
+    const rounded = miles >= 10 ? Math.round(miles * 10) / 10 : Math.round(miles);
+    return `${rounded} miles`;
+  }
+
+  function escapeHTML(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function getArrowSVG() {
+    return `
+    <svg width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 21l14-14M21 21V7H7"
+        stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  `;
+  }
+
+  function createNearbyRouteCard(feature, index) {
+    const card = document.createElement("div");
+    card.className = "nearby-route-card";
+    card.dataset.featureIndex = index;
+    card.style.cursor = "pointer";
+
+    card.innerHTML = `
+    <div class="nearby-route-info">
+      <div class="nearby-route-name">${feature.properties.Name}</div>
+      <div class="nearby-route-distance">
+        ${formatMilesFromProps(feature.properties)}
+      </div>
+    </div>
+    <div class="nearby-route-arrow">${getArrowSVG()}</div>
+  `;
+
+    return card;
+  }
+
+
+  function renderNearbyRouteCards(geojson) {
+    const container = document.getElementById("nearbyRoutes");
+    if (!container) {
+      console.error("Missing container #nearbyRoutes in HTML");
+      return;
+    }
+
+    const features = Array.isArray(geojson?.features) ? geojson.features : [];
+    container.innerHTML = "";
+
+    features.forEach((feature, index) => {
+      container.appendChild(createNearbyRouteCard(feature, index));
+    });
+  }
+  let routesGeojson;
+
+  try {
+    const res = await fetch("./data/routes_calculated.geojson");
+    routesGeojson = await res.json();
+    renderNearbyRouteCards(routesGeojson);
+  } catch (err) {
+    console.error("Failed to load routes:", err);
+  }
+
+  // Event delegation (works even for dynamically created cards)
+  document.getElementById("nearbyRoutes")
+    ?.addEventListener("click", (e) => {
+      const card = e.target.closest(".nearby-route-card");
+      if (!card || !routesGeojson) return;
+
+      const index = Number(card.dataset.featureIndex);
+      const feature = routesGeojson.features[index];
+
+      if (!feature) return;
+
+      updateRoute(feature); // 👈 pass ONLY the clicked feature
+    });
+
+
+  // card create end
   // click Nearby Routes cards
   document.querySelectorAll(".nearby-route-card").forEach((card) => {
     card.style.cursor = "pointer";
@@ -349,29 +436,73 @@ const icons = {
 });
 
 // to update the route
-function updateRoute(geojson) {
-  let data = geojson;
-
-  if (geojson.type === "FeatureCollection") {
-    // data = geojson.features?.[0];
-    data = geojson.features?.[1];
-    updateStartEndPoints(data);
-  } else if (
-    geojson.type === "LineString" ||
-    geojson.type === "MultiLineString"
-  ) {
-    data = { type: "Feature", properties: {}, geometry: geojson };
-  }
-
-  if (!data || data.type !== "Feature") {
-    console.error("Invalid GeoJSON for route:", geojson);
+function updateRoute(routeFeature) {
+  if (!routeFeature || routeFeature.type !== "Feature") {
+    console.error("updateRoute expects a GeoJSON Feature", routeFeature);
     return;
   }
 
+  console.log("Updating route:", routeFeature);
+
+  updateStartEndPoints(routeFeature);
+
   const src = map.getSource("route");
-  if (!src) return; // map not loaded yet
-  src.setData(data); // updates route dynamically
+  if (!src) return;
+
+  src.setData(routeFeature);
+  map.once("idle", () => {
+    fitToFeatureBounds(routeFeature);
+  });
 }
+// fit bounds of route line into map
+function fitToFeatureBounds(
+  feature,
+  { padding = 80, duration = 800, maxZoom = 16 } = {}
+) {
+  console.log('Clicked', feature);
+  if (!feature?.geometry) return;
+
+  const bounds = new mapboxgl.LngLatBounds();
+
+  const extendLine = (line) => {
+    line.forEach((coord) => bounds.extend(coord));
+  };
+
+  const geom = feature.geometry;
+
+  if (geom.type === "LineString") {
+    extendLine(geom.coordinates);
+  } else if (geom.type === "MultiLineString") {
+    geom.coordinates.forEach((line) => extendLine(line));
+  } else {
+    console.warn("[fitToFeatureBounds] Unsupported geometry:", geom.type);
+    return;
+  }
+
+  // Prevent over-zooming on very short routes
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const isTiny =
+    Math.abs(sw.lng - ne.lng) < 1e-6 &&
+    Math.abs(sw.lat - ne.lat) < 1e-6;
+
+  if (isTiny) {
+    map.easeTo({
+      center: [sw.lng, sw.lat],
+      zoom: Math.min(map.getZoom(), maxZoom),
+      duration
+    });
+    return;
+  }
+
+  map.fitBounds(bounds, {
+    padding,
+    duration,
+    maxZoom,
+    linear: true
+  });
+}
+
 // start end dots
 function updateStartEndPoints(routeFeature) {
   const coords = routeFeature?.geometry?.coordinates;
@@ -427,23 +558,3 @@ async function fetchArcgisPlacesNearPoint({ lng, lat, searchText, radiusMeters, 
   if (!Array.isArray(data.results)) throw new Error("ArcGIS Places response missing results[]");
   return data.results;
 }
-
-// function setModalMapStyle(style, btn) {
-//   setMapStyleFor("modal", style, btn);
-// }
-
-// function setMapStyle(style, el) {
-//   setStyle(style);
-//   const buttons = el.parentElement.querySelectorAll(".btn");
-//   buttons.forEach((btn) => btn.classList.remove("active"));
-//   el.classList.add("active");
-//   document.body.classList.toggle("is-satellite", style === "satellite");
-// }
-
-// function setStyle(type) {
-//   map.setStyle(
-//     type === "satellite"
-//       ? "./styles-hybrid/style-hybrid.json"
-//       : "./styles-map/style-map.json"
-//   );
-// }

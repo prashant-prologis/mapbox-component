@@ -21,7 +21,7 @@ function openMapModal() {
       pitch: map.getPitch(),
       attributionControl: false,
     });
-
+    registerMap("modal", modalMap);
     modalMap.on("load", async () => {
       initBaseMapUI(modalMap);
       // Sync route data from main map (if any)
@@ -58,10 +58,10 @@ function injectTopControlsIntoModal(modalMap) {
   if (!holder || holder.children.length) return;
 
   holder.innerHTML = `
-    <div class="top-controls">
+    <div class="top-controls" data-map-id="modal">
       <div class="map-type-btn-gap">
-        <button class="btn active" type="button" data-style="streets">Map</button>
-        <button class="btn" type="button" data-style="satellite">Satellite</button>
+        <button class="btn active" type="button" data-style="streets" onclick="setMapStyle('streets', this)">Map</button>
+        <button class="btn" type="button" data-style="satellite" onclick="setMapStyle('satellite', this)">Satellite</button>
       </div>
 
       <div class="map-zoom-btn-gap">

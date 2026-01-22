@@ -525,35 +525,35 @@ body {
 }
 
 /* Satellite view theme*/
-body.is-satellite .top-controls .btn {
+.top-controls.is-satellite .btn {
   background: var(--sat-btn-bg);
   color: var(--sat-btn-text);
 }
 
-body.is-satellite .top-controls .btn.active {
+.top-controls.is-satellite .btn.active {
   background: var(--sat-btn-active-bg);
   color: var(--sat-btn-text);
 }
 
-body.is-satellite .bottom-controls .pill {
+.top-controls.is-satellite .bottom-controls .pill {
   background: var(--sat-btn-bg);
   color: var(--sat-btn-text);
 }
-body.is-satellite .bottom-controls .pill .pill-icon{
+.top-controls.is-satellite .bottom-controls .pill .pill-icon{
     filter: brightness(0) saturate(100%) invert(36%) sepia(99%) saturate(747%)
     hue-rotate(153deg) brightness(95%) contrast(101%);
 }
-body.is-satellite .bottom-controls .pill.is-active {
+.top-controls.is-satellite .bottom-controls .pill.is-active {
   background: var(--sat-btn-active-bg);
   color: var(--sat-accent);
 }
 
-body.is-satellite .bottom-controls .pill.is-active .pill-icon {
+.top-controls.is-satellite .bottom-controls .pill.is-active .pill-icon {
   filter: var(--sat-accent-filter);
 }
 
 /* Optional: match toggle button too */
-body.is-satellite .map-filters-toggle {
+.top-controls.is-satellite .map-filters-toggle {
   background: var(--sat-btn-bg);
   color: var(--sat-btn-text);
 }

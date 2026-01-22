@@ -16,17 +16,47 @@ const map = new mapboxgl.Map({
   center: propertyLngLat,
   zoom: 14,
 });
+const mapsById = new Map(); // "main" -> mapInstance, "modal" -> mapInstance
 
+function registerMap(mapId, mapInstance) {
+  mapsById.set(mapId, mapInstance);
+}
+// main map
+// const mainMap = new mapboxgl.Map({...});
+registerMap("main", map);
+
+// modal map
+// const modalMap = new mapboxgl.Map({...});
+
+
+// function setMapStyle(style, el) {
+//   setStyle(style);
+//   const buttons = el.parentElement.querySelectorAll(".btn");
+//   buttons.forEach((btn) => btn.classList.remove("active"));
+//   el.classList.add("active");
+//   document.body.classList.toggle("is-satellite", style === "satellite");
+// }
 function setMapStyle(style, el) {
-  setStyle(style);
-  const buttons = el.parentElement.querySelectorAll(".btn");
-  buttons.forEach((btn) => btn.classList.remove("active"));
+  const controls = el.closest(".top-controls");
+  if (!controls) return;
+
+  // update only this button group
+  const group = el.closest(".map-type-btn-gap");
+  group.querySelectorAll(".btn").forEach((btn) => btn.classList.remove("active"));
   el.classList.add("active");
-  document.body.classList.toggle("is-satellite", style === "satellite");
+
+  // scope satellite class locally
+  controls.classList.toggle("is-satellite", style === "satellite");
+
+  setStyle(style, controls);
 }
 
-function setStyle(type) {
-  map.setStyle(
+function setStyle(type, controls) {
+  const mapId = controls.dataset.mapId;
+  const mapInstance = mapsById.get(mapId);
+  if (!mapInstance) return;
+
+  mapInstance.setStyle(
     type === "satellite"
       ? "./styles-hybrid/style-hybrid.json"
       : "./styles-map/style-map.json"
@@ -406,48 +436,23 @@ async function fetchArcgisPlacesNearPoint({ lng, lat, searchText, radiusMeters, 
   if (!Array.isArray(data.results)) throw new Error("ArcGIS Places response missing results[]");
   return data.results;
 }
-// add top controls to modal-map
-function injectTopControlsIntoModal(modalMap) {
-  const holder = document.querySelector("#mapModal .top-controls-holder");
-  if (!holder || holder.children.length) return;
 
-  holder.innerHTML = `
-    <div class="top-controls">
-      <div class="map-type-btn-gap">
-        <button class="btn active" type="button" data-style="streets">Map</button>
-        <button class="btn" type="button" data-style="satellite">Satellite</button>
-      </div>
+// function setModalMapStyle(style, btn) {
+//   setMapStyleFor("modal", style, btn);
+// }
 
-      <div class="map-zoom-btn-gap">
-        <button class="btn" type="button" data-zoom="out">−</button>
-        <button class="btn" type="button" data-zoom="in">+</button>
-      </div>
-    </div>
-  `;
+// function setMapStyle(style, el) {
+//   setStyle(style);
+//   const buttons = el.parentElement.querySelectorAll(".btn");
+//   buttons.forEach((btn) => btn.classList.remove("active"));
+//   el.classList.add("active");
+//   document.body.classList.toggle("is-satellite", style === "satellite");
+// }
 
-  // Style buttons
-  const styleBtns = holder.querySelectorAll("[data-style]");
-  styleBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const style = btn.dataset.style;
-
-      modalMap.setStyle(
-        style === "satellite"
-          ? "./styles-hybrid/style-hybrid.json"
-          : "./styles-map/style-map.json"
-      );
-
-      styleBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-    });
-  });
-
-  // Zoom buttons
-  holder.querySelector("[data-zoom='in']")?.addEventListener("click", () => modalMap.zoomIn());
-  holder.querySelector("[data-zoom='out']")?.addEventListener("click", () => modalMap.zoomOut());
-}
-
-
-function setModalMapStyle(style, btn) {
-  setMapStyleFor("modal", style, btn);
-}
+// function setStyle(type) {
+//   map.setStyle(
+//     type === "satellite"
+//       ? "./styles-hybrid/style-hybrid.json"
+//       : "./styles-map/style-map.json"
+//   );
+// }

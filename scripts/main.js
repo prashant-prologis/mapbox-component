@@ -319,84 +319,147 @@ ensureRouteLayers();
     btn.setAttribute("aria-selected", isOn ? "true" : "false");
   });
   // create nearby route cards
-  function kmToMiles(km) {
-    return km * 0.621371;
+function kmToMiles(km) {
+  return km * 0.621371;
+}
+
+function formatMilesFromProps(objOrProps) {
+  const tryGet = (o) => {
+    if (!o) return null;
+    if (typeof o.Total_Miles === "number" && !Number.isNaN(o.Total_Miles)) return o.Total_Miles;
+    if (typeof o.Total_Kilometers === "number" && !Number.isNaN(o.Total_Kilometers)) return kmToMiles(o.Total_Kilometers);
+    return null;
+  };
+
+  // direct (route object top-level)
+  let miles = tryGet(objOrProps);
+  if (miles == null && objOrProps?.routesdata?.properties) {
+    miles = tryGet(objOrProps.routesdata.properties);
+  }
+  if (miles == null && objOrProps?.properties) {
+    miles = tryGet(objOrProps.properties);
   }
 
-  function formatMilesFromProps(props) {
-    const miles =
-      (typeof props.Total_Miles === "number" && !Number.isNaN(props.Total_Miles))
-        ? props.Total_Miles
-        : (typeof props.Total_Kilometers === "number" && !Number.isNaN(props.Total_Kilometers))
-          ? kmToMiles(props.Total_Kilometers)
-          : null;
+  if (miles == null) return "";
 
-    if (miles == null) return "";
-    const rounded = miles >= 10 ? Math.round(miles * 10) / 10 : Math.round(miles);
-    return `${rounded} miles`;
-  }
+  // round: show one decimal if >= 10, else round integer
+  const rounded = miles >= 10 ? Math.round(miles * 10) / 10 : Math.round(miles);
+  return `${rounded} miles`;
+}
 
-  function getArrowSVG() {
-    return `
-    <svg width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7 21l14-14M21 21V7H7"
-        stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
+function getArrowSVG() {
+  return `
+  <svg width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7 21l14-14M21 21V7H7"
+      stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
   `;
-  }
+}
 
-  function createNearbyRouteCard(feature, index) {
-    const card = document.createElement("div");
-    card.className = "nearby-route-card";
-    card.dataset.featureIndex = index;
-    card.style.cursor = "pointer";
+// create card using a normalized route object
+function createNearbyRouteCard(routeObj, index) {
+  const card = document.createElement("div");
+  card.className = "nearby-route-card";
+  card.dataset.routeIndex = index;
+  card.style.cursor = "pointer";
 
-    card.innerHTML = `
+  const name =
+    (typeof routeObj.name === "string" && routeObj.name) ||
+    routeObj?.routesdata?.properties?.Name ||
+    routeObj?.properties?.Name ||
+    "";
+
+  card.innerHTML = `
     <div class="nearby-route-info">
-      <div class="nearby-route-name">${feature.properties.Name}</div>
+      <div class="nearby-route-name">${name}</div>
       <div class="nearby-route-distance">
-        ${formatMilesFromProps(feature.properties)}
+        ${formatMilesFromProps(routeObj)}
       </div>
     </div>
     <div class="nearby-route-arrow">${getArrowSVG()}</div>
   `;
-    return card;
+  return card;
+}
+
+// Normalize incoming data into an array of "route objects".
+// Supported inputs:
+//  - FeatureCollection (old): { type: "FeatureCollection", features: [...] }
+//  - Array of route objects (new): [ { name, routesdata, Total_Kilometers, ... }, ... ]
+function getRoutesArray(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw;
   }
-
-  function renderNearbyRouteCards(geojson) {
-    const container = document.getElementById("nearbyRoutes");
-    if (!container) {
-      console.error("Missing container #nearbyRoutes in HTML");
-      return;
-    }
-
-    const features = Array.isArray(geojson?.features) ? geojson.features : [];
-    container.innerHTML = "";
-
-    features.forEach((feature, index) => {
-      container.appendChild(createNearbyRouteCard(feature, index));
+  if (raw.type === "FeatureCollection" && Array.isArray(raw.features)) {
+    return raw.features.map((f) => {
+      return {
+        name: f?.properties?.Name || "",
+        routesdata: f,
+        // copy properties so distance lookups work
+        ...f?.properties,
+      };
     });
   }
-  let routesGeojson;
+  //if its single Feature, wrap it
+  if (raw.type === "Feature" && raw.properties) {
+    return [{
+      name: raw.properties.Name || "",
+      routesdata: raw,
+      ...raw.properties
+    }];
+  }
+  return [];
+}
 
-  try {
-    const res = await fetch("./data/routes_calculated.geojson");
-    routesGeojson = await res.json();
-    renderNearbyRouteCards(routesGeojson);
-  } catch (err) {
-    console.error("Failed to load routes:", err);
+let routesGeojsonRaw = null; // raw fetch result
+let routesList = [];         // normalized array used for rendering and click mapping
+
+function renderNearbyRouteCards(rawData) {
+  const container = document.getElementById("nearbyRoutes");
+  if (!container) {
+    console.error("Missing container #nearbyRoutes in HTML");
+    return;
   }
 
-  // Event delegation (works even for dynamically created cards)
-  document.getElementById("nearbyRoutes")
-    ?.addEventListener("click", (e) => {
-      const card = e.target.closest(".nearby-route-card");
-      if (!card || !routesGeojson) return;
-      const index = Number(card.dataset.featureIndex);
-      const feature = routesGeojson.features[index];
-      if (!feature) return;
-      updateRoute(feature); //only pass the clicked feature
-    });
+  routesGeojsonRaw = rawData;   
+  routesList = getRoutesArray(rawData);
+
+  container.innerHTML = "";
+  routesList.forEach((routeObj, index) => {
+    container.appendChild(createNearbyRouteCard(routeObj, index));
+  });
+}
+
+// fetch & render nearby routes
+try {
+  const res = await fetch("./data/routes_calculated.geojson");
+  const data = await res.json();
+  console.log("1. routes raw:", data);
+  renderNearbyRouteCards(data);
+} catch (err) {
+  console.error("Failed to load routes:", err);
+}
+
+// Event delegation for click on cards
+document.getElementById("nearbyRoutes")?.addEventListener("click", (e) => {
+  const card = e.target.closest(".nearby-route-card");
+  if (!card) return;
+
+  const idx = Number(card.dataset.routeIndex);
+  if (Number.isNaN(idx)) return;
+
+  const routeObj = routesList[idx];
+  if (!routeObj) return;
+
+  const routeFeature = routeObj.routesdata || (routeObj.type === "Feature" ? routeObj : null);
+  if (!routeFeature) {
+    console.warn("Clicked route doesn't contain a GeoJSON Feature to display", routeObj);
+    return;
+  }
+
+  updateRoute(routeFeature);
+});
+
   // card create end
 });
 

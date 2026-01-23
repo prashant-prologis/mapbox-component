@@ -2,7 +2,7 @@ const rootStyles = getComputedStyle(document.documentElement);
 
 // Main JS for Mapbox UI
 mapboxgl.accessToken =
-  "pk.eyJ1IjoicGhvbGxpcy1wcm9sb2dpcyIsImEiOiJjbWl4cGt1ajUwN2JpM2RvOXdqOWFmb3U3In0.RyiaedumDC0gnw6FeFKqrA ";
+  "pk.eyJ1IjoicGhvbGxpcy1wcm9sb2dpcyIsImEiOiJjbWl4cGt1ajUwN2JpM2RvOXdqOWFmb3U3In0.RyiaedumDC0gnw6FeFKqrA";
 
 const propertyLngLat = [
   -118.1415221999, 33.978311];
@@ -16,7 +16,63 @@ const map = new mapboxgl.Map({
   center: propertyLngLat,
   zoom: 13,
 });
-const mapsById = new Map(); // "main" -> mapInstance, "modal" -> mapInstance
+
+// fix for route disapperaing on style change
+// Keep the last selected route so we can re-render after style changes
+let currentRouteFeature = null;
+function ensureRouteLayers() {
+  // Route line
+  if (!map.getSource("route")) {
+    map.addSource("route", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] }
+    });
+  }
+  if (!map.getLayer("route")) {
+    map.addLayer({
+      id: "route",
+      type: "line",
+      source: "route",
+      layout: { "line-join": "round", "line-cap": "round" },
+      paint: { "line-color": "#22C3B3", "line-width": 5 }
+    });
+  }
+
+  // Start/end points
+  if (!map.getSource("route-points")) {
+    map.addSource("route-points", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] }
+    });
+  }
+  if (!map.getLayer("route-points")) {
+    map.addLayer({
+      id: "route-points",
+      type: "circle",
+      source: "route-points",
+      paint: {
+        "circle-radius": 7,
+        "circle-color": "#22C3B3",
+        "circle-stroke-width": 1,
+        "circle-stroke-color": "#ffffff"
+      }
+    });
+  }
+}
+// When style changes (satellite/map), Mapbox removes custom layers/sources.
+// Re-add them and re-apply the current route.
+map.on("style.load", () => {
+  ensureRouteLayers();
+
+  if (currentRouteFeature) {
+    const routeSrc = map.getSource("route");
+    if (routeSrc) routeSrc.setData(currentRouteFeature);
+    updateStartEndPoints(currentRouteFeature);
+  }
+});
+
+// fix ends
+const mapsById = new Map(); 
 
 function registerMap(mapId, mapInstance) {
   mapsById.set(mapId, mapInstance);
@@ -74,53 +130,13 @@ function handleMobileFilters() {
 }
 window.addEventListener("resize", handleMobileFilters);
 window.addEventListener("DOMContentLoaded", handleMobileFilters);
-// 
+
 const placesToken = "AAPTxy8BH1VEsoebNVZXo8HurLmr_fzoB_OJeMHTT117x7yTw6PTdp6kXVqjeR36gVvs31jWOHGqDqy2itT7XXo-Ba2PD9gPJ5hHjfWEMI3cWeGYEVX65AU5PTA1vvNcB1OlwIpmCy9rlHQzXdy8cvBbIy8bQ674ZYxWTY1uPclh1jpg84krvHrUH8yqu0OIxydKtn7uhxS1Ydj2kv97eWoGXtP2xuTUwVaLdk3H7k9HjtY.AT1_82PMU3Il"
 const placesRadiusMeters = Number(1609.344); // NEED TO MAKE THIS DYNAMIC [default 8kms]
 const placesPageSize = Number(20);
 map.on("load", async () => {
-  // Route line
-  map.addSource("route", {
-    type: "geojson",
-    data: {
-      type: "FeatureCollection",
-      features: []
-    }
-  });
-  map.addLayer({
-    id: "route",
-    type: "line",
-    source: "route",
-    layout: {
-      "line-join": "round",
-      "line-cap": "round",
-    },
-    paint: {
-      "line-color": "#22C3B3",
-      "line-width": 5,
-    },
-  });
+ensureRouteLayers();
 
-  // for start & end point dots on map
-  map.addSource("route-points", {
-    type: "geojson",
-    data: {
-      type: "FeatureCollection",
-      features: []
-    }
-  });
-  // dots layer added
-  map.addLayer({
-    id: "route-points",
-    type: "circle",
-    source: "route-points",
-    paint: {
-      "circle-radius": 7,
-      "circle-color": "#22C3B3",
-      "circle-stroke-width": 1,
-      "circle-stroke-color": "#ffffff"
-    }
-  });
 
   // Custom city marker at map center
   // Accept city image from a variable
@@ -196,7 +212,7 @@ map.on("load", async () => {
     },
   ];
 
-  // common args once
+  // common args
   const [lng, lat] = propertyLngLat;
 
   const baseParams = {
@@ -260,10 +276,7 @@ map.on("load", async () => {
         <img src="${icons[layer]}" alt="${layer}" />
       </div>
     `;
-
       const marker = new mapboxgl.Marker(el).setLngLat(item.lngLat);
-
-
       // Use flex column for popup content
       const popupContent = `
         <div class="popup-content-flex">
@@ -279,21 +292,6 @@ map.on("load", async () => {
 
   const enabled = new Set();
   // disable the pins POI inside popup
-  function resetPillsAndPins() {
-    // Remove active UI for pills
-    controls.querySelectorAll(".pill").forEach((btn) => {
-      btn.classList.remove("is-active");
-      btn.setAttribute("aria-selected", "false");
-    });
-
-    // Remove all markers from map and clear enabled layers
-    enabled.forEach((layer) => {
-      (markersByLayer[layer] || []).forEach((m) => m.remove());
-    });
-    enabled.clear();
-  }
-
-
   function toggleLayer(layer) {
     const list = markersByLayer[layer] || [];
     const turnOn = !enabled.has(layer);
@@ -340,15 +338,6 @@ map.on("load", async () => {
     return `${rounded} miles`;
   }
 
-  function escapeHTML(str) {
-    return String(str ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
   function getArrowSVG() {
     return `
     <svg width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -373,10 +362,8 @@ map.on("load", async () => {
     </div>
     <div class="nearby-route-arrow">${getArrowSVG()}</div>
   `;
-
     return card;
   }
-
 
   function renderNearbyRouteCards(geojson) {
     const container = document.getElementById("nearbyRoutes");
@@ -407,45 +394,24 @@ map.on("load", async () => {
     ?.addEventListener("click", (e) => {
       const card = e.target.closest(".nearby-route-card");
       if (!card || !routesGeojson) return;
-
       const index = Number(card.dataset.featureIndex);
       const feature = routesGeojson.features[index];
-
       if (!feature) return;
-
-      updateRoute(feature); // 👈 pass ONLY the clicked feature
+      updateRoute(feature); //only pass the clicked feature
     });
-
-
   // card create end
-  // click Nearby Routes cards
-  document.querySelectorAll(".nearby-route-card").forEach((card) => {
-    card.style.cursor = "pointer";
-
-    card.addEventListener("click", async () => {
-      try {
-        const res = await fetch("./data/routes_calculated.geojson"); // adjust path!
-        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-        const geojson = await res.json();
-        updateRoute(geojson);
-      } catch (err) {
-        console.error("Failed to load route GeoJSON:", err);
-      }
-    });
-  });
 });
 
 // to update the route
 function updateRoute(routeFeature) {
   if (!routeFeature || routeFeature.type !== "Feature") {
-    console.error("updateRoute expects a GeoJSON Feature", routeFeature);
+    console.warn("updateRoute expects a GeoJSON Feature", routeFeature);
     return;
   }
-
-  console.log("Updating route:", routeFeature);
+  currentRouteFeature = routeFeature; // remember latest route
+ensureRouteLayers();                // in case style just changed
 
   updateStartEndPoints(routeFeature);
-
   const src = map.getSource("route");
   if (!src) return;
 
@@ -459,15 +425,11 @@ function fitToFeatureBounds(
   feature,
   { padding = 80, duration = 800, maxZoom = 16 } = {}
 ) {
-  console.log('Clicked', feature);
   if (!feature?.geometry) return;
-
   const bounds = new mapboxgl.LngLatBounds();
-
   const extendLine = (line) => {
     line.forEach((coord) => bounds.extend(coord));
   };
-
   const geom = feature.geometry;
 
   if (geom.type === "LineString") {
@@ -505,13 +467,18 @@ function fitToFeatureBounds(
 
 // start end dots
 function updateStartEndPoints(routeFeature) {
+  const source = map.getSource("route-points");
+  if (!source) {
+    console.warn("route-points source not ready yet");
+    return;
+  }
   const coords = routeFeature?.geometry?.coordinates;
   if (!Array.isArray(coords) || coords.length < 2) return;
 
   const start = coords[0];                    // [lng, lat]
   const end = coords[coords.length - 1];      // [lng, lat]
 
-  map.getSource("route-points").setData({
+  source.setData({
     type: "FeatureCollection",
     features: [
       {

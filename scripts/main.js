@@ -249,8 +249,6 @@ ensureRouteLayers();
     points[g.key] = dedupePoints(points[g.key]);
   }
   // arcGis api call ends
-
-
   // MARKER COLORS:
   const colors = {
     food: rootStyles.getPropertyValue('--color-food-pin').trim(),

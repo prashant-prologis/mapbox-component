@@ -282,7 +282,7 @@ ensureRouteLayers();
           <span>${item.address}</span>
         </div>
       `;
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent);
+      const popup = new mapboxgl.Popup({ offset: 16,  closeButton: false }).setHTML(popupContent);
       marker.setPopup(popup);
       return marker;
     });

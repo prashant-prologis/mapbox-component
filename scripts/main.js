@@ -444,7 +444,11 @@ try {
 document.getElementById("nearbyRoutes")?.addEventListener("click", (e) => {
   const card = e.target.closest(".nearby-route-card");
   if (!card) return;
-
+// add this lines for active state of card
+  document.querySelectorAll(".nearby-route-card.active")
+    .forEach(el => el.classList.remove("active"));
+  card.classList.add("active");
+// active state ended
   const idx = Number(card.dataset.routeIndex);
   if (Number.isNaN(idx)) return;
 

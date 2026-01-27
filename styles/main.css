@@ -4,14 +4,11 @@
   --color-bg: #062a2f;
   --color-white: #ffffff;
   --color-black: #000000;
-
   --color-primary: #003840;
   --color-primary-dark: #004a55;
   --color-secondary: #083238;
-
   --color-accent: #b6d6d9;
   --color-border: #3a5a5e;
-
   --color-popup-bg: #004A55;
   --color-popup-tip: #004A55;
   --color-food-pin: #88FF8D;
@@ -27,10 +24,8 @@
   /* Spacing & Sizing */
   --radius-pill: 30px;
   --radius-card-sm: 4px;
-
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.18);
   --shadow-btn: 0 2px 8px rgba(0, 0, 0, 0.12);
-
   --map-width: 93%;
   --map-height: 390px;
   --map-margin: 24px;
@@ -40,8 +35,7 @@
   --sat-btn-text: #003840;
   --sat-btn-active-bg: #C9CFD4;
   --sat-accent: #1fbf9a;
-  --sat-accent-filter: brightness(0) saturate(100%) invert(62%) sepia(44%)
-    saturate(671%) hue-rotate(116deg) brightness(92%) contrast(92%);
+  --sat-accent-filter: brightness(0) saturate(100%) invert(62%) sepia(44%) saturate(671%) hue-rotate(116deg) brightness(92%) contrast(92%);
 }
 
 body {
@@ -230,9 +224,9 @@ body {
 }
 
 .nearby-routes-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
   margin: var(--map-margin);
 }
 
@@ -240,25 +234,20 @@ body {
   background: transparent;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-card-sm);
-
   display: flex;
   align-items: center;
-
-  flex: 1 1 320px;
-  min-width: 315px;
-  max-width: 330px;
-
   padding: 15px;
   gap: 18px;
-
   color: var(--color-white);
-
-  transition: border 0.2s;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.nearby-route-card:hover {
+.nearby-route-card:hover,
+.nearby-route-card.active {
   border-color: var(--color-white);
 }
+
 
 .nearby-route-icon {
   flex-shrink: 0;
@@ -331,13 +320,6 @@ body {
   max-width: 100vw;
 }
 
-/* Split list variant */
-.nearby-routes-list.split-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
 /* Popup sizing */
 @media (min-width: 400px) {
   .mapboxgl-popup-content {
@@ -363,20 +345,15 @@ body {
     display: none;
   }
 
-  .nearby-routes-list.split-2 {
+  .nearby-routes-list {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 900px) {
   .nearby-routes-list {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     gap: 16px;
-  }
-
-  .nearby-route-card {
-    min-width: 0;
-    max-width: 100%;
   }
 }
 
@@ -481,29 +458,6 @@ body {
   .nearby-route-distance {
     font-size: var(--font-size-sm);
   }
-
-  .main-content-col > .map-card,
-  .main-content-col > .nearby-routes-section {
-    width: 100vw;
-    min-width: 0;
-    max-width: 100vw;
-  }
-
-  .main-content-col {
-    width: 100vw;
-    max-width: 100vw;
-  }
-
-  .main-sidebar-col {
-    width: 100vw;
-    max-width: 100vw;
-    display: none;
-  }
-
-  .nearby-routes-list.split-2 {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
 }
 
 @media (max-width: 400px) {
@@ -524,8 +478,7 @@ body {
   }
 }
 
-/* Satellite view theme*/
-/* Satellite view theme (scoped to a single map ui) */
+/* Satellite view theme */
 .map-ui.is-satellite .btn {
   background: var(--sat-btn-bg);
   color: var(--sat-btn-text);
@@ -536,18 +489,15 @@ body {
   color: var(--sat-btn-text);
 }
 
-/* Bottom pills */
 .map-ui.is-satellite .bottom-controls .pill {
   background: var(--sat-btn-bg);
   color: var(--sat-btn-text);
 }
 
 .map-ui.is-satellite .bottom-controls .pill .pill-icon {
-  filter: brightness(0) saturate(100%) invert(36%) sepia(99%) saturate(747%)
-    hue-rotate(153deg) brightness(95%) contrast(101%);
+  filter: brightness(0) saturate(100%) invert(36%) sepia(99%) saturate(747%) hue-rotate(153deg) brightness(95%) contrast(101%);
 }
 
-/* Active pill: use aria-selected since your HTML already uses it */
 .map-ui.is-satellite .bottom-controls .pill[aria-selected="true"] {
   background: var(--sat-btn-active-bg);
   color: var(--sat-accent);
@@ -557,13 +507,11 @@ body {
   filter: var(--sat-accent-filter);
 }
 
-
-/* Optional: match toggle button too */
 body.is-satellite .map-filters-toggle {
   background: var(--sat-btn-bg);
   color: var(--sat-btn-text);
 }
-/* custom marker pins */
+/* Custom marker pins */
 .pin-marker {
   cursor: pointer;
 }
@@ -587,8 +535,7 @@ body.is-satellite .map-filters-toggle {
   pointer-events: none;
 }
 
-/* modal-popup */
-/* --- Modal (popup) --- */
+/* Modal */
 .modal {
   position: fixed;
   inset: 0;
@@ -665,7 +612,7 @@ body.modal-open {
   }
 }
 
-/* modal-popup ends */
+/* Modal ends */
 #mapModal {
   position: fixed; /* ensure positioning context */
 }

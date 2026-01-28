@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Custom Mapbox UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Mapbox -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.17.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.17.0/mapbox-gl.js"></script>
+    <link rel="stylesheet" href="./styles/main.css" />
+    <script src="./scripts/main.js" defer></script>
+    <script src="./scripts/markets.js" defer></script>
+</head>
+
+<body>
+    <div class="main-layout-row">
+        <div class="main-content-col">
+            <div class="market-buttons">
+    <button type="button" class="market-btn" data-market-id="dc-md-va">
+      DC / MD / Northern VA
+    </button>
+  
+    <button type="button" class="market-btn" data-market-id="baltimore">
+      Baltimore Metro
+    </button>
+
+  </div>
+            <div class="map-card" id="mapCard">
+                <div id="map"></div>
+
+                <!-- Top right controls -->
+                <div class="top-controls">
+                    <div class="map-type-btn-gap">
+                        <button class="btn active" onclick="setMapStyle('streets', this)">
+                            Map
+                        </button>
+                        <button class="btn" onclick="setMapStyle('satellite', this)">
+                            Satellite
+                        </button>
+                    </div>
+
+                    <div class="map-zoom-btn-gap">
+                        <button class="btn" onclick="map.zoomOut()">−</button>
+                        <button class="btn" onclick="map.zoomIn()">+</button>
+                    </div>
+                </div>
+                <button class="map-filters-toggle" type="button" onclick="toggleMapFilters()">
+                    + Map Filters
+                </button>
+            </div>
+        </div>
+        <div class="main-sidebar-col">
+            -- right side content
+        </div>
+    </div>
+</body>
+
+</html>

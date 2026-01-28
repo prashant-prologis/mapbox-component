@@ -1,0 +1,711 @@
+/* Main Styles for Mapbox UI (SCSS) */
+
+/* -----------------------------
+  Design Tokens (SCSS variables)
+------------------------------ */
+$color-bg: #062a2f;
+$color-white: #ffffff;
+$color-black: #000000;
+$color-primary: #003840;
+$color-primary-dark: #004a55;
+$color-secondary: #083238;
+$color-accent: #b6d6d9;
+$color-border: #3a5a5e;
+$color-popup-bg: #004a55;
+$color-popup-tip: #004a55;
+$color-food-pin: #88ff8d;
+$color-transport-pin: #dbd94b;
+$color-amenities-pin: #4ba3db;
+
+/* Typography */
+$font-main: "Inter", Arial, sans-serif;
+$font-size-base: 1rem;
+$font-size-md: 1.1rem;
+$font-size-sm: 0.95rem;
+
+/* Spacing & sizing */
+$radius-pill: 30px;
+$radius-card-sm: 4px;
+$shadow-card: 0 2px 8px rgba(0, 0, 0, 0.18);
+$shadow-btn: 0 2px 8px rgba(0, 0, 0, 0.12);
+$map-width: 93%;
+$map-height: 390px;
+$map-margin: 24px;
+
+/* Satellite UI theme */
+$sat-btn-bg: #eaedf4;
+$sat-btn-text: #003840;
+$sat-btn-active-bg: #c9cfd4;
+$sat-accent: #1fbf9a;
+$sat-accent-filter: brightness(0) saturate(100%) invert(62%) sepia(44%)
+  saturate(671%) hue-rotate(116deg) brightness(92%) contrast(92%);
+
+/* Re-used filter for active pill icon */
+$pill-active-filter: brightness(0) saturate(100%) invert(36%) sepia(99%)
+  saturate(747%) hue-rotate(153deg) brightness(95%) contrast(101%);
+
+/* -----------------------------
+  Base
+------------------------------ */
+body {
+  background: $color-bg;
+  font-family: $font-main;
+}
+
+/* -----------------------------
+  Map container
+------------------------------ */
+.map-card {
+  width: $map-width;
+  height: $map-height;
+  margin: $map-margin;
+  border-radius: $radius-card-sm;
+  overflow: hidden;
+  position: relative;
+  background: $color-white;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+/* -----------------------------
+  Controls
+------------------------------ */
+.top-controls {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+}
+
+.map-type-btn-gap {
+  display: flex;
+}
+
+.map-zoom-btn-gap {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  background-color: $color-primary;
+  color: $color-white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+
+  &.active {
+    background-color: $color-primary-dark;
+  }
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+/* -----------------------------
+  Bottom controls (POIs pills)
+------------------------------ */
+.bottom-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+}
+
+/* Pills */
+.pill {
+  background: $color-secondary;
+  color: $color-white;
+  padding: 10px 18px;
+  border-radius: $radius-pill;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  outline: none;
+  box-shadow: none;
+
+  &:hover {
+    opacity: 0.95;
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &.is-active {
+    .pill-icon {
+      filter: $pill-active-filter;
+    }
+  }
+}
+
+.pill-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* -----------------------------
+  Mapbox Popup
+------------------------------ */
+.mapboxgl-popup-content {
+  background: $color-popup-bg !important;
+  color: $color-white;
+  font-size: 0.8rem;
+  font-weight: 100;
+  padding: 20px;
+
+  width: 40vw;
+  max-width: 264px;
+  min-width: 200px;
+  min-height: 63px;
+  max-height: 103px;
+
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+
+  strong {
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: block;
+  }
+}
+
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+  border-bottom-color: $color-popup-tip;
+}
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+  border-top-color: $color-popup-tip;
+}
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: $color-popup-tip;
+}
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: $color-popup-tip;
+}
+
+.popup-content-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  strong {
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  span {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+}
+
+/* -----------------------------
+  Markers
+------------------------------ */
+.custom-city-marker {
+  width: 40px;
+  height: 52px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.marker-pin {
+  width: 40px;
+  height: 52px;
+  background: $color-primary;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: $shadow-card;
+
+  clip-path: path(
+    "M20,0 C31,0 40,9 40,20 C40,36 20,52 20,52 C20,52 0,36 0,20 C0,9 9,0 20,0 Z"
+  );
+}
+
+.marker-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* -----------------------------
+  Nearby Routes Section
+------------------------------ */
+.nearby-routes-section {
+  background: $color-bg;
+  padding: 8px 0 0;
+  margin: 0;
+}
+
+.nearby-routes-title {
+  color: $color-white;
+  font-size: $font-size-md;
+  font-weight: 600;
+  margin: 0 0 24px 24px;
+}
+
+.nearby-routes-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: $map-margin;
+}
+
+.nearby-route-card {
+  background: transparent;
+  border: 1.5px solid $color-border;
+  border-radius: $radius-card-sm;
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  gap: 18px;
+  color: $color-white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover,
+  &.active {
+    border-color: $color-white;
+  }
+}
+
+.nearby-route-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nearby-route-info {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nearby-route-name {
+  font-size: $font-size-md;
+  font-weight: 500;
+  color: $color-white;
+}
+
+.nearby-route-distance {
+  font-size: $font-size-base;
+  color: $color-accent;
+}
+
+.nearby-route-arrow {
+  flex-shrink: 0;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+}
+
+/* -----------------------------
+  Layout
+------------------------------ */
+.main-layout-row {
+  display: flex;
+  flex-direction: row;
+  width: 90vw;
+  min-height: 100vh;
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.main-content-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  width: 60vw;
+  min-width: 0;
+  max-width: 70vw;
+
+  border-right: 1px solid $color-border;
+
+  > .map-card,
+  > .nearby-routes-section {
+    width: $map-width;
+    max-width: 100vw;
+  }
+}
+
+.main-sidebar-col {
+  width: 30vw;
+  min-width: 0;
+  max-width: 30vw;
+  box-sizing: border-box;
+  padding: 32px 16px 0;
+}
+
+/* -----------------------------
+  Popup sizing
+------------------------------ */
+@media (min-width: 400px) {
+  .mapboxgl-popup-content {
+    width: 160px;
+  }
+}
+
+/* -----------------------------
+  Responsive
+------------------------------ */
+@media (max-width: 1100px) {
+  .main-layout-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .main-content-col {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .main-sidebar-col {
+    width: 100vw;
+    max-width: 100vw;
+    display: none;
+  }
+
+  .nearby-routes-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .nearby-routes-list {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* Mobile view- fullscreen map & vertical filter menu */
+@media (max-width: 600px) {
+  .map-card {
+    width: 100vw;
+    height: 100dvh;
+    min-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  #map {
+    width: 100vw;
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .top-controls {
+    top: 10px;
+    left: 10px;
+    right: auto;
+    gap: 8px;
+    flex-direction: row;
+  }
+
+  .btn {
+    padding: 8px 10px;
+    font-size: $font-size-base;
+  }
+
+  /* Filters open as vertical menu */
+  .bottom-controls {
+    display: none;
+    left: 16px;
+    bottom: 72px;
+    transform: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    z-index: 20;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+
+    &.is-visible {
+      display: flex;
+    }
+
+    .pill {
+      min-width: 180px;
+      justify-content: flex-start;
+    }
+  }
+
+  .map-filters-toggle {
+    display: flex;
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    z-index: 21;
+
+    background: $color-primary;
+    color: $color-white;
+    border: none;
+    border-radius: $radius-card-sm;
+
+    padding: 12px 20px;
+    font-size: 1.1rem;
+
+    align-items: center;
+    gap: 8px;
+
+    box-shadow: $shadow-btn;
+    cursor: pointer;
+  }
+
+  .nearby-routes-section {
+    padding: 24px 0 0;
+  }
+
+  .nearby-routes-title {
+    font-size: 1.2rem;
+    margin: 0 0 16px 12px;
+  }
+
+  .nearby-routes-list {
+    margin: 0 8px 24px;
+    gap: 12px;
+  }
+
+  .nearby-route-card {
+    padding: 12px 10px;
+    font-size: $font-size-base;
+  }
+
+  .nearby-route-name {
+    font-size: $font-size-base;
+  }
+
+  .nearby-route-distance {
+    font-size: $font-size-sm;
+  }
+}
+
+@media (max-width: 400px) {
+  .mapboxgl-popup-content {
+    min-width: 100px;
+    width: 90vw;
+    padding: 10px;
+  }
+
+  .pill {
+    font-size: $font-size-sm;
+    padding: 7px 8px;
+  }
+
+  .map-filters-toggle {
+    font-size: 1rem;
+    padding: 10px 14px;
+  }
+}
+
+/* -----------------------------
+  Satellite view theme
+------------------------------ */
+.map-ui.is-satellite {
+  .btn {
+    background: $sat-btn-bg;
+    color: $sat-btn-text;
+
+    &.active {
+      background: $sat-btn-active-bg;
+      color: $sat-btn-text;
+    }
+  }
+
+  .bottom-controls {
+    .pill {
+      background: $sat-btn-bg;
+      color: $sat-btn-text;
+
+      .pill-icon {
+        filter: $pill-active-filter;
+      }
+
+      &[aria-selected="true"] {
+        background: $sat-btn-active-bg;
+        color: $sat-accent;
+
+        .pill-icon {
+          filter: $sat-accent-filter;
+        }
+      }
+    }
+  }
+}
+
+body.is-satellite {
+  .map-filters-toggle {
+    background: $sat-btn-bg;
+    color: $sat-btn-text;
+  }
+}
+
+/* -----------------------------
+  Custom marker pins
+------------------------------ */
+.pin-marker {
+  cursor: pointer;
+}
+
+.pin {
+  width: 30px;
+  height: 30px;
+  background: var(--pin-color); // keep CSS var because this is dynamic per-pin
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  position: relative;
+
+  img {
+    width: 18px;
+    height: 18px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    pointer-events: none;
+  }
+}
+
+/* -----------------------------
+  Modal
+------------------------------ */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 9999;
+
+  &.is-open {
+    display: block;
+  }
+
+  &_overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  &_content {
+    position: relative;
+    width: min(1000px, calc(100% - 32px));
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  }
+
+  &_header {
+    display: flex;
+    position: absolute;
+
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  &__close {
+    border: 0;
+    background: transparent;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 8px;
+    line-height: 1;
+  }
+}
+
+/* IMPORTANT: Mapbox needs explicit height */
+#mapModalCanvas.mapbox-container {
+  width: 100%;
+  height: 70vh; /* big map in modal */
+  min-height: 380px; /* ensures it’s visible */
+}
+
+/* Optional: avoid body scroll when modal open (we’ll toggle in JS too) */
+body.modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 520px) {
+  .modal_content {
+    margin: 18px auto;
+    width: calc(100% - 20px);
+  }
+
+  #mapModalCanvas.mapbox-container {
+    height: 75vh;
+    min-height: 320px;
+  }
+}
+
+/* Modal ends */
+#mapModal {
+  position: fixed; /* ensure positioning context */
+
+  .modal_overlay {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Close button on black overlay */
+  .modal-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 30;
+
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 22px;
+    line-height: 1;
+
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+  }
+}

@@ -72,7 +72,7 @@ map.on("style.load", () => {
 });
 
 // fix ends
-const mapsById = new Map(); 
+const mapsById = new Map();
 
 function registerMap(mapId, mapInstance) {
   mapsById.set(mapId, mapInstance);
@@ -88,7 +88,6 @@ function setMapStyle(style, el) {
   el.classList.add("active");
 
   ui.classList.toggle("is-satellite", style === "satellite");
-
   setStyle(style, ui);
 }
 
@@ -131,7 +130,7 @@ const placesToken = "AAPTxy8BH1VEsoebNVZXo8HurLmr_fzoB_OJeMHTT117x7yTw6PTdp6kXVq
 const placesRadiusMeters = Number(1609.344); // NEED TO MAKE THIS DYNAMIC [default 8kms]
 const placesPageSize = Number(20);
 map.on("load", async () => {
-ensureRouteLayers();
+  ensureRouteLayers();
 
 
   // Custom city marker at map center
@@ -142,11 +141,18 @@ ensureRouteLayers();
   };
   const cityMarkerEl = document.createElement("div");
   cityMarkerEl.className = "custom-city-marker";
-  cityMarkerEl.innerHTML = `
-    <div class="marker-pin">
-      <img src="${cityData.img}" alt="${cityData.name}" class="marker-img" />
-    </div>
-  `;
+  //city marker innerhtml fix
+  const markerPin = document.createElement("div");
+  markerPin.className = "marker-pin";
+
+  const img = document.createElement("img");
+  img.className = "marker-img";
+  img.src = cityData.img;
+  img.alt = cityData.name || "";
+
+  markerPin.appendChild(img);
+  cityMarkerEl.appendChild(markerPin);
+  // city marker ends
   new mapboxgl.Marker({ element: cityMarkerEl, anchor: "bottom" })
     .setLngLat(propertyLngLat)
     .addTo(map);
@@ -193,7 +199,7 @@ ensureRouteLayers();
   const searchGroups = [
     {
       key: "food",
-      terms: ["Restaurant", "Fast Food Restaurant", "Cafe", "Convenience Store", "Supermarket"],
+      terms: ["Restaurant", "Fast Food Restaurant", "Cafe", "Supermarket"],
       pointType: "Food",
     },
     {
@@ -203,7 +209,7 @@ ensureRouteLayers();
     },
     {
       key: "amenities",
-      terms: ["Gas Station", "Electric Vehicle Charging Station", "Banks", "Parking Lots"],
+      terms: ["Fuel Station", "Electric Vehicle Charging Station", "Banks", "Parking Lots"],
       pointType: "Amenity",
     },
   ];
@@ -231,14 +237,21 @@ ensureRouteLayers();
   );
 
   //run promises concurrently
-  const responses = await Promise.all(requests);
+  const responses = await Promise.allSettled(requests);
 
   //aggregate into points by group
   const points = Object.fromEntries(searchGroups.map((g) => [g.key, []]));
+  // allSettled fixed start
+  for (const res of responses) {
+    if (res.status !== "fulfilled") continue;
 
-  for (const { groupKey, pointType, results } of responses) {
-    points[groupKey].push(...arcgisResultsToPoints(results, pointType));
+    const { groupKey, pointType, results } = res.value;
+
+    points[groupKey].push(
+      ...arcgisResultsToPoints(results, pointType)
+    );
   }
+  // allSettled fixed end
 
   //dedupe each group (final structure for pills)
   for (const g of searchGroups) {
@@ -264,12 +277,17 @@ ensureRouteLayers();
       const el = document.createElement("div");
       el.className = "pin-marker";
       el.style.setProperty("--pin-color", colors[layer]);
+      // innerhtml-fix
+      const pin = document.createElement("div");
+      pin.className = "pin";
 
-      el.innerHTML = `
-      <div class="pin">
-        <img src="${icons[layer]}" alt="${layer}" />
-      </div>
-    `;
+      const img = document.createElement("img");
+      img.src = icons[layer];
+      img.alt = layer;
+
+      pin.appendChild(img);
+      el.appendChild(pin);
+
       const marker = new mapboxgl.Marker(el).setLngLat(item.lngLat);
       // Use flex column for popup content
       const popupContent = `
@@ -278,7 +296,7 @@ ensureRouteLayers();
           <span>${item.address}</span>
         </div>
       `;
-      const popup = new mapboxgl.Popup({ offset: 16,  closeButton: false }).setHTML(popupContent);
+      const popup = new mapboxgl.Popup({ offset: 16, closeButton: false }).setHTML(popupContent);
       marker.setPopup(popup);
       return marker;
     });
@@ -315,181 +333,202 @@ ensureRouteLayers();
     btn.setAttribute("aria-selected", isOn ? "true" : "false");
   });
   // create nearby route cards
-function kmToMiles(km) {
-  return km * 0.621371;
-}
-
-function formatMilesFromProps(objOrProps) {
-  const tryGet = (o) => {
-    if (!o) return null;
-    if (typeof o.Total_Miles === "number" && !Number.isNaN(o.Total_Miles)) return o.Total_Miles;
-    if (typeof o.Total_Kilometers === "number" && !Number.isNaN(o.Total_Kilometers)) return kmToMiles(o.Total_Kilometers);
-    return null;
-  };
-
-  // direct (route object top-level)
-  let miles = tryGet(objOrProps);
-  if (miles == null && objOrProps?.routesdata?.properties) {
-    miles = tryGet(objOrProps.routesdata.properties);
-  }
-  if (miles == null && objOrProps?.properties) {
-    miles = tryGet(objOrProps.properties);
+  function kmToMiles(km) {
+    return km * 0.621371;
   }
 
-  if (miles == null) return "";
+  function formatMilesFromProps(objOrProps) {
+    const tryGet = (o) => {
+      if (!o) return null;
+      if (typeof o.Total_Miles === "number" && !Number.isNaN(o.Total_Miles)) return o.Total_Miles;
+      if (typeof o.Total_Kilometers === "number" && !Number.isNaN(o.Total_Kilometers)) return kmToMiles(o.Total_Kilometers);
+      return null;
+    };
 
-  // round: show one decimal if >= 10, else round integer
-  const rounded = miles >= 10 ? Math.round(miles * 10) / 10 : Math.round(miles);
-  return `${rounded} miles`;
-}
+    // direct (route object top-level)
+    let miles = tryGet(objOrProps);
+    if (miles == null && objOrProps?.routesdata?.properties) {
+      miles = tryGet(objOrProps.routesdata.properties);
+    }
+    if (miles == null && objOrProps?.properties) {
+      miles = tryGet(objOrProps.properties);
+    }
 
-function getArrowSVG() {
-  return `
-  <svg width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M7 21l14-14M21 21V7H7"
-      stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-  </svg>
-  `;
-}
+    if (miles == null) return "";
 
-// create card using a normalized route object
-function createNearbyRouteCard(routeObj, index) {
-  const card = document.createElement("div");
-  card.className = "nearby-route-card";
-  card.dataset.routeIndex = index;
-  card.style.cursor = "pointer";
-
-  const name =
-    (typeof routeObj.name === "string" && routeObj.name) ||
-    routeObj?.routesdata?.properties?.Name ||
-    routeObj?.properties?.Name ||
-    "";
-
-  card.innerHTML = `
-    <div class="nearby-route-info">
-      <div class="nearby-route-name">${name}</div>
-      <div class="nearby-route-distance">
-        ${formatMilesFromProps(routeObj)}
-      </div>
-    </div>
-    <div class="nearby-route-arrow">${getArrowSVG()}</div>
-  `;
-  return card;
-}
-
-// Normalize incoming data into an array of "route objects".
-// Supported inputs:
-//  - FeatureCollection (old): { type: "FeatureCollection", features: [...] }
-//  - Array of route objects (new): [ { name, routesdata, Total_Kilometers, ... }, ... ]
-function getRoutesArray(raw) {
-  if (!raw) return [];
-  if (Array.isArray(raw)) {
-    return raw;
+    // round: show one decimal if >= 10, else round integer
+    const rounded = miles >= 10 ? Math.round(miles * 10) / 10 : Math.round(miles);
+    return `${rounded} miles`;
   }
-  if (raw.type === "FeatureCollection" && Array.isArray(raw.features)) {
-    return raw.features.map((f) => {
-      return {
-        name: f?.properties?.Name || "",
-        routesdata: f,
-        // copy properties so distance lookups work
-        ...f?.properties,
-      };
+
+  function getArrowSVG() {
+    const svgNS = "http://www.w3.org/2000/svg";
+
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("width", "28");
+    svg.setAttribute("height", "28");
+    svg.setAttribute("viewBox", "0 0 28 28");
+    svg.setAttribute("fill", "none");
+
+    const path = document.createElementNS(svgNS, "path");
+    path.setAttribute("d", "M7 21l14-14M21 21V7H7");
+    path.setAttribute("stroke", "#fff");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+
+    svg.appendChild(path);
+    return svg;
+  }
+
+  // create card using a normalized route object
+  function createNearbyRouteCard(routeObj, index) {
+    const card = document.createElement("div");
+    card.className = "nearby-route-card";
+    card.dataset.routeIndex = index;
+    card.style.cursor = "pointer";
+
+    const name =
+      (typeof routeObj.name === "string" && routeObj.name) ||
+      routeObj?.routesdata?.properties?.Name ||
+      routeObj?.properties?.Name ||
+      "";
+    // nearby-routes card innerhtml fix
+    const info = document.createElement("div");
+    info.className = "nearby-route-info";
+
+    const routeName = document.createElement("div");
+    routeName.className = "nearby-route-name";
+    routeName.textContent = name || "";
+
+    const routeDistance = document.createElement("div");
+    routeDistance.className = "nearby-route-distance";
+    routeDistance.textContent = formatMilesFromProps(routeObj) || "";
+
+    info.append(routeName, routeDistance);
+    const arrow = document.createElement("div");
+    arrow.className = "nearby-route-arrow";
+    arrow.appendChild(getArrowSVG());
+    card.replaceChildren(info, arrow);
+    return card;
+    // nearby-route- innerhtml fix ends
+  }
+
+  // Normalize incoming data into an array of "route objects".
+  // Supported inputs:
+  //  - FeatureCollection (old): { type: "FeatureCollection", features: [...] }
+  //  - Array of route objects (new): [ { name, routesdata, Total_Kilometers, ... }, ... ]
+  function getRoutesArray(raw) {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw;
+    }
+    if (raw.type === "FeatureCollection" && Array.isArray(raw.features)) {
+      return raw.features.map((f) => {
+        return {
+          name: f?.properties?.Name || "",
+          routesdata: f,
+          // copy properties so distance lookups work
+          ...f?.properties,
+        };
+      });
+    }
+    //if its single Feature, wrap it
+    if (raw.type === "Feature" && raw.properties) {
+      return [{
+        name: raw.properties.Name || "",
+        routesdata: raw,
+        ...raw.properties
+      }];
+    }
+    return [];
+  }
+
+  let routesGeojsonRaw = null; // raw fetch result
+  let routesList = [];         // normalized array used for rendering and click mapping
+
+  function renderNearbyRouteCards(rawData) {
+    const container = document.getElementById("nearbyRoutes");
+    if (!container) {
+      console.error("Missing container #nearbyRoutes in HTML");
+      return;
+    }
+
+    routesGeojsonRaw = rawData;
+    routesList = getRoutesArray(rawData);
+
+    // innerHTML fix
+    container.replaceChildren();
+
+    routesList.forEach((routeObj, index) => {
+      container.appendChild(createNearbyRouteCard(routeObj, index));
     });
   }
-  //if its single Feature, wrap it
-  if (raw.type === "Feature" && raw.properties) {
-    return [{
-      name: raw.properties.Name || "",
-      routesdata: raw,
-      ...raw.properties
-    }];
-  }
-  return [];
-}
 
-let routesGeojsonRaw = null; // raw fetch result
-let routesList = [];         // normalized array used for rendering and click mapping
-
-function renderNearbyRouteCards(rawData) {
-  const container = document.getElementById("nearbyRoutes");
-  if (!container) {
-    console.error("Missing container #nearbyRoutes in HTML");
-    return;
+  // fetch & render nearby routes
+  try {
+    const res = await fetch("./data/routes_calculated.geojson");
+    const data = await res.json();
+    console.log("1. routes raw:", data);
+    renderNearbyRouteCards(data);
+  } catch (err) {
+    console.error("Failed to load routes:", err);
   }
 
-  routesGeojsonRaw = rawData;   
-  routesList = getRoutesArray(rawData);
+  // Event delegation for click on cards
+  document.getElementById("nearbyRoutes")?.addEventListener("click", (e) => {
+    const card = e.target.closest(".nearby-route-card");
+    if (!card) return;
 
-  container.innerHTML = "";
-  routesList.forEach((routeObj, index) => {
-    container.appendChild(createNearbyRouteCard(routeObj, index));
+    const isAlreadyActive = card.classList.contains("active");
+
+    // If clicking the same active card: reset map & remove route and start/end points
+    if (isAlreadyActive) {
+      card.classList.remove("active");
+      currentRouteFeature = null;
+      ensureRouteLayers();
+
+      const emptyFC = { type: "FeatureCollection", features: [] };
+
+      const routeSrc = map.getSource("route");
+      if (routeSrc) routeSrc.setData(emptyFC);
+
+      const ptsSrc = map.getSource("route-points");
+      if (ptsSrc) ptsSrc.setData(emptyFC);
+      // reset map to default view
+      map.easeTo({
+        center: propertyLngLat,
+        zoom: 13,
+      });
+
+      return;
+    }
+
+    // otherwise activate new card
+    document
+      .querySelectorAll(".nearby-route-card.active")
+      .forEach(el => el.classList.remove("active"));
+
+    card.classList.add("active");
+
+    const idx = Number(card.dataset.routeIndex);
+    if (Number.isNaN(idx)) return;
+
+    const routeObj = routesList[idx];
+    if (!routeObj) return;
+
+    const routeFeature =
+      routeObj.routesdata || (routeObj.type === "Feature" ? routeObj : null);
+
+    if (!routeFeature) {
+      console.warn(
+        "Clicked route doesn't contain a GeoJSON Feature to display",
+        routeObj
+      );
+      return;
+    }
+    updateRoute(routeFeature);
   });
-}
-
-// fetch & render nearby routes
-try {
-  const res = await fetch("./data/routes_calculated.geojson");
-  const data = await res.json();
-  console.log("1. routes raw:", data);
-  renderNearbyRouteCards(data);
-} catch (err) {
-  console.error("Failed to load routes:", err);
-}
-
-// Event delegation for click on cards
-document.getElementById("nearbyRoutes")?.addEventListener("click", (e) => {
-  const card = e.target.closest(".nearby-route-card");
-  if (!card) return;
-
-  const isAlreadyActive = card.classList.contains("active");
-
-  // If clicking the same active card: reset map & remove route and start/end points
-  if (isAlreadyActive) {
-    card.classList.remove("active");
-
-    // remove route layers / start-end points
-    if (map.getLayer("route")) {
-      map.removeLayer("route");
-      map.removeLayer("route-points");
-    }
-    if (map.getSource("route-source")) {
-      map.removeSource("route-source");
-    }
-
-    // reset map to default view
-    map.easeTo({
-      center: propertyLngLat,
-      zoom: 13,
-    });
-
-    return;
-  }
-
-  // otherwise activate new card
-  document
-    .querySelectorAll(".nearby-route-card.active")
-    .forEach(el => el.classList.remove("active"));
-
-  card.classList.add("active");
-
-  const idx = Number(card.dataset.routeIndex);
-  if (Number.isNaN(idx)) return;
-
-  const routeObj = routesList[idx];
-  if (!routeObj) return;
-
-  const routeFeature =
-    routeObj.routesdata || (routeObj.type === "Feature" ? routeObj : null);
-
-  if (!routeFeature) {
-    console.warn(
-      "Clicked route doesn't contain a GeoJSON Feature to display",
-      routeObj
-    );
-    return;
-  }
-  updateRoute(routeFeature);
-});
 
   // card create end
 });
@@ -501,7 +540,7 @@ function updateRoute(routeFeature) {
     return;
   }
   currentRouteFeature = routeFeature; // remember latest route
-ensureRouteLayers();                // in case style just changed
+  ensureRouteLayers();                // in case style just changed
 
   updateStartEndPoints(routeFeature);
   const src = map.getSource("route");

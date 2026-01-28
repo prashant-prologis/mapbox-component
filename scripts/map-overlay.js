@@ -22,73 +22,95 @@ function openMapModal() {
       attributionControl: false,
     });
     registerMap("modal", modalMap);
-    modalMap.on("load", async () => {
-      initBaseMapUI(modalMap);
-      // Sync route data from main map (if any)
-      const mainRouteSource = map.getSource("route");
-      if (mainRouteSource) {
-        const routeData = mainRouteSource._data;
-        modalMap.getSource("route")?.setData(routeData);
-      }
 
-      modalMap.resize();
-      
-    });
-      const cityData = {
-    img: "./assets/icons/city.svg", // Replace with dynamic value from JSON
-    name: "City Center",
-  };
-  const cityMarkerEl = document.createElement("div");
-  cityMarkerEl.className = "custom-city-marker";
-  cityMarkerEl.innerHTML = `
-    <div class="marker-pin">
-      <img src="${cityData.img}" alt="${cityData.name}" class="marker-img" />
-    </div>
-  `;
-  new mapboxgl.Marker({ element: cityMarkerEl, anchor: "bottom" })
-    .setLngLat(propertyLngLat)
-    .addTo(modalMap);
+    const cityData = {
+      img: "./assets/icons/city.svg", // Replace with dynamic value from JSON
+      name: "City Center",
+    };
+    const cityMarkerEl = document.createElement("div");
+    //city marker innerhtml fix
+    const markerPin = document.createElement("div");
+    markerPin.className = "marker-pin";
+
+    const img = document.createElement("img");
+    img.className = "marker-img";
+    img.src = cityData.img;
+    img.alt = cityData.name || "";
+
+    markerPin.appendChild(img);
+    cityMarkerEl.appendChild(markerPin);
+    // city marker ends
+    new mapboxgl.Marker({ element: cityMarkerEl, anchor: "bottom" })
+      .setLngLat(propertyLngLat)
+      .addTo(modalMap);
   }
-   injectTopControlsIntoModal(modalMap);
+  injectTopControlsIntoModal(modalMap);
 
   requestAnimationFrame(() => modalMap?.resize());
 }
 function injectTopControlsIntoModal(modalMap) {
   const holder = document.querySelector("#mapModal .top-controls-holder");
   if (!holder || holder.children.length) return;
+  // innerhtml fix
+  // Clear holder safely
+  holder.replaceChildren();
 
-  holder.innerHTML = `
-  <div class="map-ui" data-map-id="modal">
-    <div class="top-controls">
-      <div class="map-type-btn-gap">
-        <button class="btn active" type="button" data-style="streets" onclick="setMapStyle('streets', this)" aria-label="Switch to map view">Map</button>
-        <button class="btn" type="button" data-style="satellite" onclick="setMapStyle('satellite', this)" aria-label="Switch to satellite view">Satellite</button>
-      </div>
+  // map-ui
+  const mapUI = document.createElement("div");
+  mapUI.className = "map-ui";
+  mapUI.dataset.mapId = "modal";
 
-      <div class="map-zoom-btn-gap">
-        <button class="btn" type="button" data-zoom="out" aria-label="Zoom out">−</button>
-        <button class="btn" type="button" data-zoom="in" aria-label="Zoom in">+</button>
-      </div>
-    </div>
-    </div>
-  `;
+  // top-controls
+  const topControls = document.createElement("div");
+  topControls.className = "top-controls";
 
-  // Style buttons
-  const styleBtns = holder.querySelectorAll("[data-style]");
-  styleBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const style = btn.dataset.style;
+  // map-type-btn-gap
+  const mapTypeGap = document.createElement("div");
+  mapTypeGap.className = "map-type-btn-gap";
 
-      modalMap.setStyle(
-        style === "satellite"
-          ? "./styles-hybrid/style-hybrid.json"
-          : "./styles-map/style-map.json"
-      );
+  const mapBtn = document.createElement("button");
+  mapBtn.className = "btn active";
+  mapBtn.type = "button";
+  mapBtn.dataset.style = "streets";
+  mapBtn.setAttribute("aria-label", "Switch to map view");
+  mapBtn.textContent = "Map";
+  mapBtn.onclick = () => setMapStyle("streets", mapBtn);
 
-      styleBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-    });
-  });
+  const satelliteBtn = document.createElement("button");
+  satelliteBtn.className = "btn";
+  satelliteBtn.type = "button";
+  satelliteBtn.dataset.style = "satellite";
+  satelliteBtn.setAttribute("aria-label", "Switch to satellite view");
+  satelliteBtn.textContent = "Satellite";
+  satelliteBtn.onclick = () => setMapStyle("satellite", satelliteBtn);
+
+  mapTypeGap.append(mapBtn, satelliteBtn);
+
+  // map-zoom-btn-gap
+  const zoomGap = document.createElement("div");
+  zoomGap.className = "map-zoom-btn-gap";
+
+  const zoomOutBtn = document.createElement("button");
+  zoomOutBtn.className = "btn";
+  zoomOutBtn.type = "button";
+  zoomOutBtn.dataset.zoom = "out";
+  zoomOutBtn.setAttribute("aria-label", "Zoom out");
+  zoomOutBtn.textContent = "−";
+
+  const zoomInBtn = document.createElement("button");
+  zoomInBtn.className = "btn";
+  zoomInBtn.type = "button";
+  zoomInBtn.dataset.zoom = "in";
+  zoomInBtn.setAttribute("aria-label", "Zoom in");
+  zoomInBtn.textContent = "+";
+
+  zoomGap.append(zoomOutBtn, zoomInBtn);
+
+  // assemble
+  topControls.append(mapTypeGap, zoomGap);
+  mapUI.appendChild(topControls);
+  holder.appendChild(mapUI);
+  // innerhtml fix ends
 
   // Zoom buttons
   holder.querySelector("[data-zoom='in']")?.addEventListener("click", () => modalMap.zoomIn());

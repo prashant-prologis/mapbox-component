@@ -89,13 +89,9 @@ function setMapStyle(style, el) {
 
   ui.classList.toggle("is-satellite", style === "satellite");
 
-  if (style === "satellite") {
-    ui.querySelectorAll(".bottom-controls .pill")
-      .forEach((pill) => pill.setAttribute("aria-selected", "false"));
-  }
-
   setStyle(style, ui);
 }
+
 
 
 function setStyle(type, ui) {
@@ -313,7 +309,7 @@ ensureRouteLayers();
 
     const layer = btn.dataset.type;
     const isOn = toggleLayer(layer);
-
+    document.querySelectorAll(".mapboxgl-popup").forEach(p => p.remove());
     // active UI
     btn.classList.toggle("is-active", isOn);
     btn.setAttribute("aria-selected", isOn ? "true" : "false");
@@ -444,23 +440,54 @@ try {
 document.getElementById("nearbyRoutes")?.addEventListener("click", (e) => {
   const card = e.target.closest(".nearby-route-card");
   if (!card) return;
-// add this lines for active state of card
-  document.querySelectorAll(".nearby-route-card.active")
+
+  const isAlreadyActive = card.classList.contains("active");
+
+  // If clicking the same active card: reset map & remove route and start/end points
+  if (isAlreadyActive) {
+    card.classList.remove("active");
+
+    // remove route layers / start-end points
+    if (map.getLayer("route")) {
+      map.removeLayer("route");
+      map.removeLayer("route-points");
+    }
+    if (map.getSource("route-source")) {
+      map.removeSource("route-source");
+    }
+
+    // reset map to default view
+    map.easeTo({
+      center: propertyLngLat,
+      zoom: 13,
+    });
+
+    return;
+  }
+
+  // otherwise activate new card
+  document
+    .querySelectorAll(".nearby-route-card.active")
     .forEach(el => el.classList.remove("active"));
+
   card.classList.add("active");
-// active state ended
+
   const idx = Number(card.dataset.routeIndex);
   if (Number.isNaN(idx)) return;
 
   const routeObj = routesList[idx];
   if (!routeObj) return;
 
-  const routeFeature = routeObj.routesdata || (routeObj.type === "Feature" ? routeObj : null);
+  const routeFeature =
+    routeObj.routesdata || (routeObj.type === "Feature" ? routeObj : null);
+
   if (!routeFeature) {
-    console.warn("Clicked route doesn't contain a GeoJSON Feature to display", routeObj);
+    console.warn(
+      "Clicked route doesn't contain a GeoJSON Feature to display",
+      routeObj
+    );
     return;
   }
-
   updateRoute(routeFeature);
 });
 

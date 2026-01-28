@@ -24,34 +24,34 @@
                  <div class="map-ui" data-map-id="main">
                 <div class="top-controls">
                     <div class="map-type-btn-gap">
-                        <button class="btn active" onclick="setMapStyle('streets', this)">
+                        <button class="btn active" onclick="setMapStyle('streets', this)" aria-label="Switch to map view">
                             Map
                         </button>
-                        <button class="btn" onclick="setMapStyle('satellite', this)">
+                        <button class="btn" onclick="setMapStyle('satellite', this)" aria-label="Switch to satellite view">
                             Satellite
                         </button>
                     </div>
 
                     <div class="map-zoom-btn-gap">
-                        <button class="btn" onclick="map.zoomOut()">−</button>
-                        <button class="btn" onclick="map.zoomIn()">+</button>
+                        <button class="btn" onclick="map.zoomOut()" aria-label="Zoom out">−</button>
+                        <button class="btn" onclick="map.zoomIn()" aria-label="Zoom in">+</button>
                     </div>
                 </div>
-                <button class="map-filters-toggle" type="button" onclick="toggleMapFilters()">
+                <button class="map-filters-toggle" type="button" onclick="toggleMapFilters()" aria-label="Toggle map filters">
                     + Map Filters
                 </button>
                 <div class="bottom-controls">
-                    <button class="pill" type="button" data-type="food" role="tab" aria-selected="true">
+                    <button class="pill" type="button" data-type="food" role="tab" aria-selected="true" aria-label="Food places filter">
                         <img src="./assets/icons/food.svg" alt="" class="pill-icon" />
                         <span>Food</span>
                     </button>
 
-                    <button class="pill" type="button" data-type="transport" role="tab" aria-selected="false">
+                    <button class="pill" type="button" data-type="transport" role="tab" aria-selected="false" aria-label="Transport places filter">
                         <img src="./assets/icons/transport.svg" alt="" class="pill-icon" />
                         <span>Transport</span>
                     </button>
 
-                    <button class="pill" type="button" data-type="amenities" role="tab" aria-selected="false">
+                    <button class="pill" type="button" data-type="amenities" role="tab" aria-selected="false" aria-label="Amenities places filter">
                         <img src="./assets/icons/amenities.svg" alt="" class="pill-icon" />
                         <span>Amenities</span>
                     </button>
@@ -59,7 +59,7 @@
                 </div>
             </div>
             <div>
-                <button class="pill js-open-map" type="button" data-type="Open Map" role="tab" aria-selected="false">
+                <button class="pill js-open-map" type="button" data-type="Open Map" role="tab" aria-selected="false" aria-label="Open map view popup">
                     <span>Open map</span>
                 </button>
             </div>
@@ -84,7 +84,6 @@
     ✕
   </button>
         <div class="modal_content" role="dialog" aria-modal="true">
-            <!-- <button class="modal__close js-close-map" type="button">✕</button> -->
             <div class="modal_header">
             </div>
 

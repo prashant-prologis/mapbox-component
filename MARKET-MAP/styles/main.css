@@ -173,6 +173,8 @@ body {
 .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: var(--color-popup-tip); }
 .mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: var(--color-popup-tip); }
 .mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: var(--color-popup-tip); }
+.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip { border-bottom-color: var(--color-popup-tip); }
+.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip { border-bottom-color: var(--color-popup-tip); }
 
 .popup-content-flex {
   display: flex;
@@ -698,4 +700,90 @@ body.modal-open {
 /* Hover feedback */
 #mapModal .modal-close-btn:hover {
   background: rgba(0, 0, 0, 0.9);
+}
+/* market-map */
+.property-tooltip-popup .mapboxgl-popup-content {
+  background: rgba(24, 69, 67, 0.95);
+  color: #ffffff;
+  padding: 5px;
+  max-width: 520px;
+  min-width: 300px;
+  min-height: auto;
+  max-height: none;
+  display: flex;
+  flex-direction: row;
+}
+
+.property-popup{
+  display: flex;
+  width: 290px;         
+  overflow: hidden;
+  color: #fff;
+}
+
+.property-popup__left{
+  position: relative;
+  width: 100%;         
+  flex: 0 0 160px;
+}
+
+.property-popup__img{
+  width: 100%;
+  height: 100px;     
+  object-fit: cover;
+  display: block;
+}
+
+.property-popup__badge{
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 14px;
+  background: #0f6f6b;  
+}
+
+.property-popup__right{
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.property-popup__kicker{
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0.95;
+}
+
+.property-popup__metric{
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.property-popup__metricVal{
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.property-popup__metricUnit{
+  font-size: 16px;
+  font-weight: 800;
+  opacity: 0.95;
+}
+
+.property-popup__title{
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.property-popup__desc{
+  font-size: 18px;
+  line-height: 1.25;
+  opacity: 0.95;
+  white-space: pre-line;
 }

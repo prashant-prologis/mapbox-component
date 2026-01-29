@@ -167,6 +167,8 @@ body {
 .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: var(--color-popup-tip); }
 .mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: var(--color-popup-tip); }
 .mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: var(--color-popup-tip); }
+.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip { border-bottom-color: var(--color-popup-tip); }
+.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip { border-bottom-color: var(--color-popup-tip); }
 
 .popup-content-flex {
   display: flex;
